@@ -2739,8 +2739,9 @@ namespace PRoConEvents
             // Move To Staging Channel If:
             //   Team Based swapping is off, or
             //   The number of players is lower than the team swapping threshold, or
-            //   Intermission swapping is on and the game is in intermission.
-            if (!synTeamBasedSwapping || getPlayersOnBothServers().Count < synTeamBasedThreshold || (synIntermissionSwapping && mBetweenRounds))
+            //   Intermission swapping is on and the game is in intermission or
+            //   The player is marked as Sync to Staging.
+            if (!synTeamBasedSwapping || getPlayersOnBothServers().Count < synTeamBasedThreshold || (synIntermissionSwapping && mBetweenRounds) || client.IsSyncToStaging)
             {
                 // Don't move players from pickup channels to the staging channel.
                 foreach (TeamspeakChannel tsChannel in mPickupChannels)
