@@ -250,6 +250,10 @@ namespace PRoCon {
                 this.m_prcConnection_ServerInfo(this.m_prcConnection.Game, this.m_prcConnection.CurrentServerInfo);
             }
 
+            if (this.m_prcConnection.GameType == "BF3" || this.m_prcConnection.GameType == "MOHW") {
+                this.tbcClientTabs.TabPages.Remove(this.tabMapView);
+            }
+
             this.SetLocalization(this.m_prcConnection.Language);
 
             this.SetVersionInfoLabels(this.m_prcConnection.Game);
@@ -469,7 +473,7 @@ namespace PRoCon {
             this.lblCurrentMapName.Text = String.Format("{0} - {1}", tmpMap.GameMode, tmpMap.PublicLevelName);
             this.toolTipMapControls.SetToolTip(this.lblCurrentMapName, csiServerInfo.Map);
 
-            if (this.Client.Game is BF3Client) {
+            if (this.Client.Game is BF3Client || this.Client.Game is MOHWClient) {
                 this.lblCurrentRound.Text = this.m_clocLanguage.GetLocalized("uscServerConnection.lblCurrentRound", (csiServerInfo.CurrentRound + 1).ToString(), csiServerInfo.TotalRounds.ToString());
             }
             else {
@@ -516,6 +520,51 @@ namespace PRoCon {
                     default: break;
                 }
             }
+            // BF3 & MOHW goes here cause it has ConnectionState parameter is empty
+            if (this.Client.Game is BF3Client) {
+                this.toolTipPlasma.SetToolTip(this.lblPlasmaStatus,
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.lblPlasmaStatus.AcceptingPlayers.ToolTip")
+                        + Environment.NewLine + Environment.NewLine +
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.extServerInfo.ExternalGameIpandPort.ToolTip") + "\t" + csiServerInfo.ExternalGameIpandPort
+                    + Environment.NewLine +
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.extServerInfo.JoinQueueEnabled.ToolTip") + "\t"
+                    + this.m_clocLanguage.GetLocalized(String.Format("uscServerConnection.extServerInfo.JoinQueueEnabled.{0}.ToolTip", csiServerInfo.JoinQueueEnabled))
+                    + Environment.NewLine +
+                    this.m_clocLanguage.GetDefaultLocalized("QuickMatch Detected:", "uscServerConnection.extServerInfo.QuickMatch.ToolTip") + "\t"
+                    + this.m_clocLanguage.GetDefaultLocalized(csiServerInfo.QuickMatch.ToString(), String.Format("uscServerConnection.extServerInfo.QuickMatch.{0}.ToolTip", csiServerInfo.QuickMatch.ToString()))
+                    + Environment.NewLine + Environment.NewLine +
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.extServerInfo.ServerRegion.ToolTip") + "\t\t"
+                    + this.m_clocLanguage.GetLocalized(String.Format("uscServerConnection.extServerInfo.ServerRegion.{0}.ToolTip", csiServerInfo.ServerRegion))
+                    + Environment.NewLine +
+                    this.m_clocLanguage.GetDefaultLocalized("Server Country:", "uscServerConnection.extServerInfo.ServerCountry.ToolTip") + "\t\t" + csiServerInfo.ServerCountry
+                    + Environment.NewLine +
+                    this.m_clocLanguage.GetDefaultLocalized("Closest Ping Site:", "uscServerConnection.extServerInfo.PingSite.ToolTip") + "\t\t" +
+                    this.m_clocLanguage.GetDefaultLocalized(csiServerInfo.PingSite, String.Format("uscServerConnection.extServerInfo.PingSite.{0}.ToolTip", csiServerInfo.PingSite))
+                    + Environment.NewLine + Environment.NewLine +
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.extServerInfo.PunkBusterVersion.ToolTip") + "\t" + csiServerInfo.PunkBusterVersion
+                    + Environment.NewLine
+                    + Environment.NewLine
+                );
+            }
+            // MoHW is way different to BF3 R-33
+            if (this.Client.Game is MOHWClient) {
+                this.toolTipPlasma.SetToolTip(this.lblPlasmaStatus,
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.lblPlasmaStatus.AcceptingPlayers.ToolTip")
+                        + Environment.NewLine + Environment.NewLine +
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.extServerInfo.ServerRegion.ToolTip") + "\t\t"
+                        + this.m_clocLanguage.GetLocalized(String.Format("uscServerConnection.extServerInfo.ServerRegion.{0}.ToolTip", csiServerInfo.ServerRegion))
+                    + Environment.NewLine +
+                    this.m_clocLanguage.GetDefaultLocalized("Server Country:", "uscServerConnection.extServerInfo.ServerCountry.ToolTip") + "\t\t" + csiServerInfo.ServerCountry
+                    + Environment.NewLine +
+                    this.m_clocLanguage.GetDefaultLocalized("Closest Ping Site:", "uscServerConnection.extServerInfo.PingSite.ToolTip") + "\t\t" +
+                    this.m_clocLanguage.GetDefaultLocalized(csiServerInfo.PingSite, String.Format("uscServerConnection.extServerInfo.PingSite.{0}.ToolTip", csiServerInfo.PingSite))
+                    + Environment.NewLine + Environment.NewLine +
+                    this.m_clocLanguage.GetLocalized("uscServerConnection.extServerInfo.PunkBusterVersion.ToolTip") + "\t" + csiServerInfo.PunkBusterVersion
+                    + Environment.NewLine
+                    + Environment.NewLine
+                );
+            }
+
         }
 
         private void m_prcConnection_LoadingLevel(FrostbiteClient sender, string mapFileName, int roundsPlayed, int roundsTotal) {
@@ -550,7 +599,7 @@ namespace PRoCon {
 
         private void m_prcConnection_LevelLoaded(FrostbiteClient sender, string mapFileName, string Gamemode, int roundsPlayed, int roundsTotal)
         {
-            if (String.Compare(this.Client.GameType, "BF3", true) == 0)
+            if (String.Compare(this.Client.GameType, "BF3", true) == 0 || String.Compare(this.Client.GameType, "MOHW", true) == 0)
             {
                 this.SetServerInfoLabels(new CServerInfo(this.m_prcConnection.CurrentServerInfo.ServerName,
                                                         mapFileName,

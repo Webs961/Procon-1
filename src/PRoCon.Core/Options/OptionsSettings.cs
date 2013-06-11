@@ -31,6 +31,7 @@ namespace PRoCon.Core.Options {
 
         public event OptionsEnabledHandler AdminMoveMessageChanged;
         public event OptionsEnabledHandler ChatDisplayAdminNameChanged;
+        public event OptionsEnabledHandler EnableAdminReasonChanged;
 
         public event OptionsEnabledHandler LayerHideLocalPluginsChanged;
         public event OptionsEnabledHandler LayerHideLocalAccountsChanged;
@@ -40,6 +41,8 @@ namespace PRoCon.Core.Options {
         public event OptionsEnabledHandler ShowDICESpecialOptionsChanged;
 
         public event OptionsEnabledHandler AllowAnonymousUsageDataChanged;
+
+        public event OptionsEnabledHandler UsePluginOldStyleLoadChanged;
 
         private bool m_isConsoleLoggingEnabled;
         public bool ConsoleLogging {
@@ -249,7 +252,24 @@ namespace PRoCon.Core.Options {
                 }
             }
         }
-        
+
+        // EnableAdminReason
+        private bool m_isEnableAdminReasonEnabled = true;
+        public bool EnableAdminReason
+        {
+            get {
+                return this.m_isEnableAdminReasonEnabled;
+            }
+            set {
+                this.m_isEnableAdminReasonEnabled = value;
+                this.m_praApplication.SaveMainConfig();
+
+                if (this.EnableAdminReasonChanged != null) {
+                    FrostbiteConnection.RaiseEvent(this.EnableAdminReasonChanged.GetInvocationList(), value);
+                }
+            }
+        }
+
         private bool m_isLayerHideLocalPluginsEnabled = true;
         public bool LayerHideLocalPlugins {
             get {
@@ -404,7 +424,59 @@ namespace PRoCon.Core.Options {
             set;
         }
 
-        public PermissionSet PluginPermissions {
+        private int m_PluginMaxRuntime_s;
+        public int PluginMaxRuntime_s {
+            get {
+                return this.m_PluginMaxRuntime_s;
+            }
+            set {
+                if (value <= 0) { value = 10; }
+                if (value >= 60) { value = 59; }
+                this.m_PluginMaxRuntime_s = value;
+                this.m_praApplication.SaveMainConfig();
+            }
+        }
+
+        private int m_PluginMaxRuntime_m;
+        public int PluginMaxRuntime_m {
+            get {
+                return this.m_PluginMaxRuntime_m;
+            }
+            set {
+                if (value < 0) { value = 0; }
+                if (value >= 60) { value = 59; }
+                this.m_PluginMaxRuntime_m = value;
+                this.m_praApplication.SaveMainConfig();
+            }
+        }
+
+        private bool m_isPluginMaxRuntimeLocked;
+        public bool PluginMaxRuntimeLocked {
+            get {
+                return m_isPluginMaxRuntimeLocked;
+            }
+            set {
+                this.m_isPluginMaxRuntimeLocked = value;
+            }
+        }
+
+        private bool m_isUsePluginOldStyleLoadEnabled;
+        public bool UsePluginOldStyleLoad {
+            get {
+                return this.m_isUsePluginOldStyleLoadEnabled;
+            }
+            set {
+                this.m_isUsePluginOldStyleLoadEnabled = value;
+                this.m_praApplication.SaveMainConfig();
+
+                if (this.UsePluginOldStyleLoadChanged != null) {
+                    FrostbiteConnection.RaiseEvent(this.UsePluginOldStyleLoadChanged.GetInvocationList(), value);
+                }
+            }
+        }
+
+        public PermissionSet PluginPermissions
+        {
 
             get {
 
@@ -480,6 +552,8 @@ namespace PRoCon.Core.Options {
             this.AutoCheckGameConfigsForUpdates = true;
             this.AllowAnonymousUsageData = true;
 
+            this.EnableAdminReason = false;
+
             this.LayerHideLocalAccounts = true;
             this.LayerHideLocalPlugins = true;
 
@@ -493,6 +567,11 @@ namespace PRoCon.Core.Options {
             this.StatsLinksMaxNum = 4;
             this.StatsLinkNameUrl = new NotificationList<StatsLinkNameUrl>();
             this.StatsLinkNameUrl.Add(new StatsLinkNameUrl("Metabans", "http://metabans.com/search/%player_name%"));
+
+            this.PluginMaxRuntime_s = 59;
+            this.PluginMaxRuntime_m = 0;
+
+            this.UsePluginOldStyleLoad = false;
         }
     }
 }

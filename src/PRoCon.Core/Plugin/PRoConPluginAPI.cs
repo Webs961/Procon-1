@@ -169,6 +169,19 @@ namespace PRoCon.Core.Plugin {
 
         #endregion
 
+        #region player/squad cmds BF3
+
+        public virtual void OnPlayerIdleDuration(string soldierName, int idleTime) { }
+        public virtual void OnPlayerIsAlive(string soldierName, bool isAlive) { }
+        public virtual void OnPlayerPingedByAdmin(string soldierName, int ping) { }
+
+        public virtual void OnSquadLeader(int teamId, int squadId, string soldierName) { }
+        public virtual void OnSquadListActive(int teamId, int squadCount, List<int> squadList) { }
+        public virtual void OnSquadListPlayers(int teamId, int squadId, int playerCount, List<string> playersInSquad) { }
+        public virtual void OnSquadIsPrivate(int teamId, int squadId, bool isPrivate) { }
+
+        #endregion
+
         #region Variables
 
         #region Details
@@ -196,9 +209,40 @@ namespace PRoCon.Core.Plugin {
         public virtual void OnRoundRestartPlayerCount(int limit) { }
         public virtual void OnRoundStartPlayerCount(int limit) { }
         public virtual void OnGameModeCounter(int limit) { }
+        public virtual void OnCtfRoundTimeModifier(int limit) { }
         public virtual void OnRoundLockdownCountdown(int limit) { }
         public virtual void OnRoundWarmupTimeout(int limit) { }
         public virtual void OnPremiumStatus(bool isEnabled) { }
+        
+        public virtual void OnGunMasterWeaponsPreset(int preset) { }
+        
+        public virtual void OnVehicleSpawnAllowed(bool isEnabled) { }
+        public virtual void OnVehicleSpawnDelay(int limit) { }
+        public virtual void OnBulletDamage(int limit) { }
+        public virtual void OnOnlySquadLeaderSpawn(bool isEnabled) { }
+        public virtual void OnSoldierHealth(int limit) { }
+        public virtual void OnPlayerManDownTime(int limit) { }
+        public virtual void OnPlayerRespawnTime(int limit) { }
+        public virtual void OnHud(bool isEnabled) { }
+        public virtual void OnNameTag(bool isEnabled) { }
+
+
+        #region MoHW
+        public virtual void OnAllUnlocksUnlocked(bool isEnabled) { }
+        public virtual void OnBuddyOutline(bool isEnabled) { }
+        public virtual void OnHudBuddyInfo(bool isEnabled) { }
+        public virtual void OnHudClassAbility(bool isEnabled) { }
+        public virtual void OnHudCrosshair(bool isEnabled) { }
+        public virtual void OnHudEnemyTag(bool isEnabled) { }
+        public virtual void OnHudExplosiveIcons(bool isEnabled) { }
+        public virtual void OnHudGameMode(bool isEnabled) { }
+        public virtual void OnHudHealthAmmo(bool isEnabled) { }
+        public virtual void OnHudMinimap(bool isEnabled) { }
+        public virtual void OnHudObiturary(bool isEnabled) { }
+        public virtual void OnHudPointsTracker(bool isEnabled) { }
+        public virtual void OnHudUnlocks(bool isEnabled) { }
+        public virtual void OnPlaylist(string playlist) { }
+        #endregion
 
         #endregion
 
@@ -211,7 +255,7 @@ namespace PRoCon.Core.Plugin {
 
         #region BFBC2
 
-        public virtual void OnTeamBalance(bool isEnabled) { }
+        public virtual void OnTeamBalance(bool isEnabled) { } // vars.autoBalance too
         public virtual void OnKillCam(bool isEnabled) { }
         public virtual void OnMiniMap(bool isEnabled) { }
         public virtual void OnCrossHair(bool isEnabled) { }

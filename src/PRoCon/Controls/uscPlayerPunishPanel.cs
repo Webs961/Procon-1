@@ -507,6 +507,19 @@ namespace PRoCon {
             //obsolet with BF-3 R-8 string name = this.m_prcClient.Game is BF3Client ? "persona" : "name";
             string name = "name";
 
+            string m_strReasonAdmin = this.cboReason.Text;
+            m_strReasonAdmin = m_strReasonAdmin.Replace("%player_name%", this.m_strSoldierName);
+
+            string accountName = this.m_prcClient.Username;
+            if (Program.m_application.OptionsSettings.EnableAdminReason && accountName.Length > 0) {
+                int iBanInfo = (80 - 5 - (accountName.Length + 3));
+                if (m_strReasonAdmin.Length > iBanInfo)
+                {
+                    m_strReasonAdmin = m_strReasonAdmin.Substring(0, iBanInfo);
+                }
+                m_strReasonAdmin = m_strReasonAdmin + " (" + accountName + ")";
+            }
+
             if (this.rdoKill.Checked == true && this.PunishPlayer != null) {
 
                 if (this.cboReason.Text.Length > 0) {
@@ -541,7 +554,7 @@ namespace PRoCon {
                 }
                 else {
                     lstWords.Add("punkBuster.pb_sv_command");
-                    lstWords.Add(String.Format(@"pb_sv_kick {0} 0 ""{1}""", this.m_strSlotID, "BC2! " + this.cboReason.Text));
+                    lstWords.Add(String.Format(@"pb_sv_kick {0} 0 ""{1}""", this.m_strSlotID, "BC2! " + m_strReasonAdmin));
                 }
 
             }
@@ -552,7 +565,7 @@ namespace PRoCon {
                     lstWords.Add(name);
                     lstWords.Add(this.m_strSoldierName);
                     lstWords.Add("perm");
-                    lstWords.Add(this.cboReason.Text);
+                    lstWords.Add(m_strReasonAdmin);
 
                     //strBuildPacket = String.Format(@"admin.banPlayer ""{0}"" perm", this.m_strSoldierName);
                 }
@@ -562,7 +575,7 @@ namespace PRoCon {
                     lstWords.Add("ip");
                     lstWords.Add(this.m_strIP);
                     lstWords.Add("perm");
-                    lstWords.Add(this.cboReason.Text);
+                    lstWords.Add(m_strReasonAdmin);
 
                     //strBuildPacket = String.Format(@"admin.banIP ""{0}"" perm", this.m_strIP);
                 }
@@ -572,11 +585,11 @@ namespace PRoCon {
                         lstWords.Add("guid");
                         lstWords.Add(this.m_strGUID);
                         lstWords.Add("perm");
-                        lstWords.Add(this.cboReason.Text);
+                        lstWords.Add(m_strReasonAdmin);
                     }
                     else {
                         lstWords.Add("punkBuster.pb_sv_command");
-                        lstWords.Add(String.Format(@"pb_sv_ban {0} ""{1}""", this.m_strSlotID, "BC2! " + this.cboReason.Text));
+                        lstWords.Add(String.Format(@"pb_sv_ban {0} ""{1}""", this.m_strSlotID, "BC2! " + m_strReasonAdmin));
                     }
 
                     //strBuildPacket = String.Format(@"pb_sv_ban {0} ""{1}"" ""{2}""", this.m_strSlotID, this.cboReason.Text, this.cboReason.Text);
@@ -591,11 +604,11 @@ namespace PRoCon {
                         lstWords.Add(this.m_strSoldierName);
                         lstWords.Add("seconds");
                         lstWords.Add((uscPlayerPunishPanel.GetBanLength(this.txtTime, this.cboTimeMultiplier) * 60).ToString());
-                        lstWords.Add(this.cboReason.Text);
+                        lstWords.Add(m_strReasonAdmin);
                     }
                     else {
                         lstWords.Add("punkBuster.pb_sv_command");
-                        lstWords.Add(String.Format(@"pb_sv_kick {0} {1} ""{2}""", this.m_strSlotID, uscPlayerPunishPanel.GetBanLength(this.txtTime, this.cboTimeMultiplier), "BC2! " + this.cboReason.Text));
+                        lstWords.Add(String.Format(@"pb_sv_kick {0} {1} ""{2}""", this.m_strSlotID, uscPlayerPunishPanel.GetBanLength(this.txtTime, this.cboTimeMultiplier), "BC2! " + m_strReasonAdmin));
                     }
                     //strBuildPacket = String.Format(@"admin.banPlayer ""{0}"" seconds {1}", this.m_strSoldierName, this.GetBanLength() * 60);
                 }
@@ -605,7 +618,7 @@ namespace PRoCon {
                     lstWords.Add(this.m_strIP);
                     lstWords.Add("seconds");
                     lstWords.Add((uscPlayerPunishPanel.GetBanLength(this.txtTime, this.cboTimeMultiplier) * 60).ToString());
-                    lstWords.Add(this.cboReason.Text);
+                    lstWords.Add(m_strReasonAdmin);
 
                     //strBuildPacket = String.Format(@"admin.banIP ""{0}"" seconds {1}", this.m_strIP, this.GetBanLength() * 60);
                 }
@@ -615,7 +628,7 @@ namespace PRoCon {
                     lstWords.Add(this.m_strGUID);
                     lstWords.Add("seconds");
                     lstWords.Add((uscPlayerPunishPanel.GetBanLength(this.txtTime, this.cboTimeMultiplier) * 60).ToString());
-                    lstWords.Add(this.cboReason.Text);
+                    lstWords.Add(m_strReasonAdmin);
                 }
             }
 

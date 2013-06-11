@@ -156,6 +156,7 @@ namespace PRoCon {
             }
 
             this.m_dicPlayers.Clear();
+            this.m_dicPings.Clear();
         }
 
         //public void OnConnectionClosed() {
@@ -219,6 +220,10 @@ namespace PRoCon {
         private void m_prcClient_GameTypeDiscovered(PRoConClient sender) {
 
             this.m_prcClient.Game.ListPlayers += new FrostbiteClient.ListPlayersHandler(m_prcClient_ListPlayers);
+            if (this.m_prcClient.Game.GameType.Equals("BF3") == true) {
+                this.m_prcClient.Game.PlayerPingedByAdmin += new FrostbiteClient.PlayerPingedByAdminHandler(Game_PlayerPingedByAdmin);
+                this.m_prcClient.ProconAdminPinging += new PRoConClient.ProconAdminPlayerPinged(Game_PlayerPingedByAdmin);
+            }
             this.m_prcClient.Game.PlayerJoin += new FrostbiteClient.PlayerEventHandler(m_prcClient_PlayerJoin);
             this.m_prcClient.Game.PlayerLeft += new FrostbiteClient.PlayerLeaveHandler(m_prcClient_PlayerLeft);
             this.m_prcClient.PunkbusterPlayerInfo += new PRoConClient.PunkbusterPlayerInfoHandler(m_prcClient_PunkbusterPlayerInfo);
@@ -226,6 +231,8 @@ namespace PRoCon {
 
             this.m_prcClient.Game.PlayerChangedTeam += new FrostbiteClient.PlayerTeamChangeHandler(m_prcClient_PlayerChangedTeam);
             this.m_prcClient.Game.PlayerChangedSquad += new FrostbiteClient.PlayerTeamChangeHandler(m_prcClient_PlayerChangedSquad);
+
+            this.m_prcClient.Game.ServerInfo += new FrostbiteClient.ServerInfoHandler(m_prcClient_Serverinfo_EndRound_Update);
 
             this.m_prcClient.ProconPrivileges += new PRoConClient.ProconPrivilegesHandler(m_prcClient_ProconPrivileges);
 
@@ -325,6 +332,7 @@ namespace PRoCon {
             this.colKdr1.Text = this.colKdr2.Text = this.colKdr3.Text = this.colKdr4.Text = this.m_clocLanguage.GetLocalized("uscPlayerListPanel.lsvPlayers.colKdr", null);
             this.colScore1.Text = this.colScore2.Text = this.colScore3.Text = this.colScore4.Text = this.m_clocLanguage.GetLocalized("uscPlayerListPanel.lsvPlayers.colScore", null);
             this.colPing1.Text = this.colPing2.Text = this.colPing3.Text = this.colPing4.Text = this.m_clocLanguage.GetLocalized("uscPlayerListPanel.lsvPlayers.colPing", null);
+            this.colRank1.Tag = this.colRank2.Text = this.colRank3.Text = this.colRank4.Text = this.m_clocLanguage.GetDefaultLocalized("Rank", "uscPlayerListPanel.lsvPlayers.colRank", null);
             
             this.btnPlayerListSelectedCheese.Text = this.m_clocLanguage.GetLocalized("uscPlayerListPanel.btnPlayerListSelectedCheese", null);
 
@@ -391,6 +399,7 @@ namespace PRoCon {
         
         private readonly object m_objPlayerDictionaryLocker = new object();
         private Dictionary<string, ListViewItem> m_dicPlayers = new Dictionary<string, ListViewItem>();
+        private Dictionary<string, int> m_dicPings = new Dictionary<string, int>();
         //private bool m_blSplitList = false;
         //private int m_iSplitPlayerLists = 1;
 
@@ -463,6 +472,11 @@ namespace PRoCon {
             lviPing.Name = "ping";
             lviPing.Text = cpiPlayer.Ping.ToString();
             lviNewPlayer.SubItems.Add(lviPing);
+
+            ListViewItem.ListViewSubItem lviRank = new ListViewItem.ListViewSubItem();
+            lviRank.Name = "rank";
+            lviRank.Text = cpiPlayer.Rank.ToString();
+            lviNewPlayer.SubItems.Add(lviRank);
 
             return lviNewPlayer;
         }
@@ -564,6 +578,7 @@ namespace PRoCon {
                 ((AdditionalPlayerInfo)this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].Tag).m_cpiPlayer.Deaths = 0;
                 ((AdditionalPlayerInfo)this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].Tag).m_cpiPlayer.Score = 0;
                 ((AdditionalPlayerInfo)this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].Tag).m_cpiPlayer.Ping = 0;
+                ((AdditionalPlayerInfo)this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].Tag).m_cpiPlayer.Rank = 0;
                 ((AdditionalPlayerInfo)this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].Tag).m_cpiPlayer.SquadID = 0;
                 ((AdditionalPlayerInfo)this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].Tag).m_cpiPlayer.Kdr = 0.0F;
 
@@ -572,6 +587,7 @@ namespace PRoCon {
                 this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].SubItems["deaths"].Text = "0";
                 this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].SubItems["score"].Text = "0";
                 this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].SubItems["ping"].Text = String.Empty;
+                this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].SubItems["rank"].Text = String.Empty;
                 this.m_dicPlayers[String.Format("procon.playerlist.totals{0}", iTeamID)].SubItems["kdr"].Text = "0.00";
 
                 this.m_dicPlayers[String.Format("procon.playerlist.averages{0}", iTeamID)].SubItems["kit"].Text = String.Empty;
@@ -579,6 +595,7 @@ namespace PRoCon {
                 this.m_dicPlayers[String.Format("procon.playerlist.averages{0}", iTeamID)].SubItems["deaths"].Text = "0.00";
                 this.m_dicPlayers[String.Format("procon.playerlist.averages{0}", iTeamID)].SubItems["score"].Text = "0.00";
                 this.m_dicPlayers[String.Format("procon.playerlist.averages{0}", iTeamID)].SubItems["ping"].Text = "0.00";
+                this.m_dicPlayers[String.Format("procon.playerlist.averages{0}", iTeamID)].SubItems["rank"].Text = "-";
                 this.m_dicPlayers[String.Format("procon.playerlist.averages{0}", iTeamID)].SubItems["kdr"].Text = "0.00";
             }
         }
@@ -597,6 +614,7 @@ namespace PRoCon {
                 proconPlayerListTotalsObject.m_cpiPlayer.Deaths += player.m_cpiPlayer.Deaths;
                 proconPlayerListTotalsObject.m_cpiPlayer.Score += player.m_cpiPlayer.Score; ;
                 proconPlayerListTotalsObject.m_cpiPlayer.Ping += player.m_cpiPlayer.Ping;
+                proconPlayerListTotalsObject.m_cpiPlayer.Rank += player.m_cpiPlayer.Rank;
                 proconPlayerListTotalsObject.m_cpiPlayer.Kdr += (player.m_cpiPlayer.Deaths > 0 ? (float)player.m_cpiPlayer.Kills / (float)player.m_cpiPlayer.Deaths : player.m_cpiPlayer.Kills);
                 proconPlayerListTotalsObject.m_cpiPlayer.SquadID++;
 
@@ -644,13 +662,14 @@ namespace PRoCon {
                 proconPlayerListTotalsListItem.SubItems["kills"].Text = proconPlayerListTotalsObject.m_cpiPlayer.Kills.ToString();
                 proconPlayerListTotalsListItem.SubItems["deaths"].Text = proconPlayerListTotalsObject.m_cpiPlayer.Deaths.ToString();
                 proconPlayerListTotalsListItem.SubItems["score"].Text = proconPlayerListTotalsObject.m_cpiPlayer.Score.ToString();
-                //proconPlayerListTotalsListItem.SubItems["ping"].Text = ((SAdditionalPlayerInfo)proconPlayerListTotalsListItem.Tag).m_cpiPlayer.Ping.ToString();
+                proconPlayerListTotalsListItem.SubItems["ping"].Text = proconPlayerListTotalsObject.m_cpiPlayer.Ping.ToString();
                 proconPlayerListTotalsListItem.SubItems["kdr"].Text = String.Format("{0:0.00}", proconPlayerListTotalsObject.m_cpiPlayer.Kdr);
 
                 proconPlayerListAveragesListItem.SubItems["kills"].Text = String.Format("{0:0.00}", (float)proconPlayerListTotalsObject.m_cpiPlayer.Kills / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
                 proconPlayerListAveragesListItem.SubItems["deaths"].Text = String.Format("{0:0.00}", (float)proconPlayerListTotalsObject.m_cpiPlayer.Deaths / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
                 proconPlayerListAveragesListItem.SubItems["score"].Text = String.Format("{0:0.00}", (float)proconPlayerListTotalsObject.m_cpiPlayer.Score / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
-                proconPlayerListAveragesListItem.SubItems["ping"].Text = String.Format("{0:0}", (float)proconPlayerListTotalsObject.m_cpiPlayer.Ping / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
+                proconPlayerListAveragesListItem.SubItems["ping"].Text = String.Format("{0:0}", (int)proconPlayerListTotalsObject.m_cpiPlayer.Ping / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
+                proconPlayerListAveragesListItem.SubItems["rank"].Text = String.Format("{0:0}", (int)proconPlayerListTotalsObject.m_cpiPlayer.Rank / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
                 proconPlayerListAveragesListItem.SubItems["kdr"].Text = String.Format("{0:0.00}", proconPlayerListTotalsObject.m_cpiPlayer.Kdr / (float)proconPlayerListTotalsObject.m_cpiPlayer.SquadID);
 
                 int mostUsedKitCount = 0;
@@ -859,7 +878,9 @@ namespace PRoCon {
                 this.m_dicPlayers[playerName].Remove();
                 this.m_dicPlayers.Remove(playerName);
             }
-
+            if (this.m_dicPings.ContainsKey(playerName) == true) {
+                this.m_dicPings.Remove(playerName);
+            }
             this.UpdateTeamNames();
 
             this.RefreshSelectedPlayer();
@@ -986,7 +1007,17 @@ namespace PRoCon {
 
                         if (String.Compare(playerListItem.SubItems["kdr"].Text, kdr) == 0) { playerListItem.SubItems["kdr"].Text = kdr; }
 
-                        if (String.Compare(playerListItem.SubItems["ping"].Text, cpiPlayer.Ping.ToString()) != 0) { playerListItem.SubItems["ping"].Text = cpiPlayer.Ping.ToString(); }
+                        //if (String.Compare(playerListItem.SubItems["ping"].Text, cpiPlayer.Ping.ToString()) != 0) { playerListItem.SubItems["ping"].Text = cpiPlayer.Ping.ToString(); }
+                        if ((this.m_prcClient.Game.GameType.Equals("BF3") == true) && (this.m_dicPings.ContainsKey(cpiPlayer.SoldierName) == true)) {
+                            if (String.Compare(playerListItem.SubItems["ping"].Text, this.m_dicPings[cpiPlayer.SoldierName].ToString()) != 0) { 
+                                playerListItem.SubItems["ping"].Text = this.m_dicPings[cpiPlayer.SoldierName].ToString();
+                                cpiPlayer.Ping = this.m_dicPings[cpiPlayer.SoldierName];
+                            }
+                        } else {
+                            if (String.Compare(playerListItem.SubItems["ping"].Text, cpiPlayer.Ping.ToString()) != 0) { playerListItem.SubItems["ping"].Text = cpiPlayer.Ping.ToString(); }
+                        }
+                        
+                        if (String.Compare(playerListItem.SubItems["rank"].Text, cpiPlayer.Rank.ToString()) != 0) { playerListItem.SubItems["rank"].Text = cpiPlayer.Ping.ToString(); }
 
                         AdditionalPlayerInfo sapiAdditional;
 
@@ -1035,6 +1066,28 @@ namespace PRoCon {
                 this.m_dicPlayers.Add("procon.playerlist.averages4", this.CreateTotalsPlayer(new CPlayerInfo("Averages", "procon.playerlist.averages4", 4, 0), 4));
 
                 this.ArrangePlayers();
+            }
+        }
+
+        private void Game_PlayerPingedByAdmin(FrostbiteClient sender, string soldierName, int ping) {
+            if (this.m_dicPlayers.ContainsKey(soldierName) == true) {
+
+                if (this.m_dicPings.ContainsKey(soldierName) == true) {
+                    this.m_dicPings[soldierName] = ping;
+                } else {
+                    this.m_dicPings.Add(soldierName, ping);
+                }
+            }
+        }
+
+        private void Game_PlayerPingedByAdmin(PRoConClient sender, string soldierName, int ping) {
+            if (this.m_dicPlayers.ContainsKey(soldierName) == true) {
+
+                if (this.m_dicPings.ContainsKey(soldierName) == true) {
+                    this.m_dicPings[soldierName] = ping;
+                } else {
+                    this.m_dicPings.Add(soldierName, ping);
+                }
             }
         }
 
@@ -2037,6 +2090,10 @@ namespace PRoCon {
                 {
                     System.Diagnostics.Process.Start("http://bf3stats.com/stats_pc/" + ((CPlayerInfo)this.voiceToolStripMenuItem.Tag).SoldierName);
                 }
+                else if (this.m_prcClient.Game is MOHWClient)
+                {
+                    System.Diagnostics.Process.Start("http://mohwstats.com/stats_pc/" + ((CPlayerInfo)this.voiceToolStripMenuItem.Tag).SoldierName);
+                }
             }
         }
 
@@ -2053,6 +2110,11 @@ namespace PRoCon {
 
                 statsUrl = statsUrl.Replace("%game%", this.m_prcClient.GameType.ToLower());
 
+                string[] gsrv_ip_port = this.m_prcClient.CurrentServerInfo.ExternalGameIpandPort.Split(':');
+                statsUrl = statsUrl.Replace("%srv_ip%", gsrv_ip_port[0]);
+                statsUrl = statsUrl.Replace("%srv_port%", gsrv_ip_port[1]);
+                statsUrl = statsUrl.Replace("%srv_ip_port%", this.m_prcClient.CurrentServerInfo.ExternalGameIpandPort);
+
                 if (this.voiceToolStripMenuItem.Tag is CPlayerInfo)
                 {
                     statsUrl = statsUrl.Replace("%player_name%", ((CPlayerInfo)this.voiceToolStripMenuItem.Tag).SoldierName);
@@ -2061,6 +2123,7 @@ namespace PRoCon {
                 if (this.punkBusterScreenshotToolStripMenuItem.Tag is CPunkbusterInfo)
                 {
                     statsUrl = statsUrl.Replace("%player_PBguid%", ((CPunkbusterInfo)this.punkBusterScreenshotToolStripMenuItem.Tag).GUID);
+                    statsUrl = statsUrl.Replace("%player_IP%", ((CPunkbusterInfo)this.punkBusterScreenshotToolStripMenuItem.Tag).Ip);
                 }
                 System.Diagnostics.Process.Start(statsUrl);
             }
@@ -2072,6 +2135,34 @@ namespace PRoCon {
                 // ((CPunkbusterInfo)this.punkBusterScreenshotToolStripMenuItem.Tag).SlotID
                 this.m_prcClient.SendRequest(new List<string>() { "punkBuster.pb_sv_command", "pb_sv_getss " + ((CPunkbusterInfo)this.punkBusterScreenshotToolStripMenuItem.Tag).SlotID });
             }
+        }
+
+        #endregion
+
+        #region Double Click on player
+
+        private void lsvPlayers_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            ListViewItem lviSelected = ((PRoCon.Controls.ControlsEx.ListViewNF)sender).GetItemAt(e.X, e.Y);
+
+            if (lviSelected != null && lviSelected.Tag != null && lviSelected.Tag is AdditionalPlayerInfo)
+            {
+                CPlayerInfo player = ((AdditionalPlayerInfo)lviSelected.Tag).m_cpiPlayer;
+
+                if (player != null && lviSelected != null && this.m_lvwColumnSorter.TotalsAveragesChecker.IsMatch(lviSelected.Name) == false)
+                {
+                    if (player.SoldierName == null) {
+                        return;
+                    }
+                    try {
+                        Clipboard.SetDataObject(player.SoldierName, true, 5, 10);
+                    }
+                    catch (Exception) {
+                        // Nope, another thread is accessing the clipboard..
+                    }
+                }
+            }
+
         }
 
         #endregion
@@ -2093,15 +2184,44 @@ namespace PRoCon {
                         this.m_prcClient.SendRequest(new List<string>() { "admin.endRound", this.cboEndRound.SelectedIndex.ToString() });
                     }
                     else if (this.m_prcClient.Game is BFBC2Client) {
-                        this.m_prcClient.SendRequest(new List<string>() { "mapList.endRound", this.cboEndRound.SelectedIndex.ToString() });
+                        this.m_prcClient.SendRequest(new List<string>() { "admin.endRound", this.cboEndRound.SelectedIndex.ToString() });
                     }
                     else if (this.m_prcClient.Game is BF3Client) {
+                        this.m_prcClient.SendRequest(new List<string>() { "mapList.endRound", this.cboEndRound.SelectedIndex.ToString() });
+                    }
+                    else if (this.m_prcClient.Game is MOHWClient)
+                    {
                         this.m_prcClient.SendRequest(new List<string>() { "mapList.endRound", this.cboEndRound.SelectedIndex.ToString() });
                     }
                 }
             }
             this.cboEndRound.SelectedIndex = 0;
         }
+
+        private void m_prcClient_Serverinfo_EndRound_Update(FrostbiteClient sender, CServerInfo csiServerInfo) { 
+            //
+            int iTeams = this.m_prcClient.GetLocalizedTeamNameCount(this.m_prcClient.CurrentServerInfo.Map, this.m_prcClient.CurrentServerInfo.GameMode);
+
+
+            this.cboEndRound.Items.Clear();
+            this.cboEndRound.Items.AddRange(new object[] {
+                this.m_clocLanguage.GetDefaultLocalized("Select winning team to end round:", "uscPlayerListPanel.ctxPlayerOptions.EndRound.Label")
+            });
+            this.cboEndRound.SelectedIndex = 0;
+
+            for (int i = 1; i < iTeams; i++) {
+                this.cboEndRound.Items.AddRange(new object[] {
+                    String.Format("{0} - {1}", 
+                        this.m_clocLanguage.GetDefaultLocalized("Team " + i.ToString(), "uscPlayerListPanel.ctxPlayerOptions.EndRound.Team"+i.ToString()),
+                        this.m_prcClient.GetLocalizedTeamName(i, this.m_prcClient.CurrentServerInfo.Map, this.m_prcClient.CurrentServerInfo.GameMode)
+                    )
+                });
+            }
+
+            Graphics cboEndRoundGrafphics = cboEndRound.CreateGraphics();
+            this.cboEndRound.Width = 18 + (int)cboEndRoundGrafphics.MeasureString(this.cboEndRound.Text, this.cboEndRound.Font).Width;
+        }
+
         #endregion
     }
 }

@@ -240,9 +240,13 @@ namespace PRoCon {
             this.m_prcClient.Game.ServerInfo += new FrostbiteClient.ServerInfoHandler(m_prcClient_ServerInfo);
 
             if (sender.Game is MoHClient) {
-                cboDisplayList.Items.RemoveAt(1);
+                this.cboDisplayList.Items.RemoveAt(1);
             }
-            if (sender.Game is BF3Client) {
+            if (sender.Game is MOHWClient) {
+                this.lblDisplayFor.Visible = false;
+                this.cboDisplayChatTime.Visible = false;
+            }
+            if (sender.Game is BF3Client || sender.Game is MOHWClient) {
                 this.m_iCanLongMsg = 1;
                 this.m_iChat_MaxLength = 128;
             }
@@ -319,6 +323,35 @@ namespace PRoCon {
 
                 this.cboPlayerList.BeginUpdate();
 
+                //MoHW R-6 can't address individual players
+                if (sender.GameType != "MOHW") {
+                    // org.
+                    for (int i = 0; i < this.cboPlayerList.Items.Count; i++) {
+                        CPlayerInfo cpiInfo = (CPlayerInfo)this.cboPlayerList.Items[i];
+
+                        if (cpiInfo.SquadID != -10 && cpiInfo.TeamID != -10) {
+                            this.cboPlayerList.Items.RemoveAt(i);
+                            i--;
+                        }
+                    }
+
+                    foreach (CPlayerInfo cpiPlayer in lstPlayers) {
+                        if (this.isInComboList(cpiPlayer) == false) {
+                            this.cboPlayerList.Items.Add(cpiPlayer);
+                        }
+                    }
+
+                    this.cboPlayerList.SelectedIndex = 0;
+                    for (int i = 0; i < this.cboPlayerList.Items.Count; i++) {
+                        CPlayerInfo cpiInfo = (CPlayerInfo)this.cboPlayerList.Items[i];
+                        if (String.Compare(cpiInfo.SoldierName, objSelected.SoldierName) == 0) {
+                            this.cboPlayerList.SelectedIndex = i;
+                            break;
+                        }
+                    }
+                } // end hack
+
+                /*
                 // So much easier with linq..
                 foreach (CPlayerInfo cpiPlayer in lstPlayers) {
                     if (this.isInComboList(cpiPlayer) == false) {
@@ -343,6 +376,7 @@ namespace PRoCon {
                         i--;
                     }
                 }
+                */
 
                 this.cboPlayerList.EndUpdate();
 
@@ -659,7 +693,7 @@ namespace PRoCon {
                 }
                 else if (this.cboDisplayList.SelectedIndex == 1) {
                     this.m_iYellDuration = (int)cboDisplayChatTime.SelectedItem;
-                    if (this.m_prcClient.Game is BF3Client) {
+                    if (this.m_prcClient.Game is BF3Client || this.m_prcClient.Game is MOHWClient) {
                         this.m_iYellDuration = (int)cboDisplayChatTime.SelectedItem / 1000;
                     }
 
