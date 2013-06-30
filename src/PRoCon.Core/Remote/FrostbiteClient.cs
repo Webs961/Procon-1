@@ -36,6 +36,7 @@ namespace PRoCon.Core.Remote {
     using Core.Maps;
     using Core.TextChatModeration;
     using Core.UnlockMode;
+    using Core.GunMasterWeaponsPreset;
 
     public class FrostbiteClient {
 
@@ -89,8 +90,12 @@ namespace PRoCon.Core.Remote {
             }
         }
 
-        public double UTCoffset
-        {
+        public bool isLayered {
+            get;
+            set;
+        }
+
+        public double UTCoffset {
             get;
             set;
         }
@@ -120,6 +125,16 @@ namespace PRoCon.Core.Remote {
         public delegate void PlayerLeaveHandler(FrostbiteClient sender, string playerName, CPlayerInfo cpiPlayer);
         public delegate void PlayerAuthenticatedHandler(FrostbiteClient sender, string playerName, string playerGuid);
         public delegate void PlayerKickedHandler(FrostbiteClient sender, string strSoldierName, string strReason);
+
+        public delegate void PlayerIdleStateHandler(FrostbiteClient sender, string soldierName, int idleTime);
+        public delegate void PlayerIsAliveHandler(FrostbiteClient sender, string soldierName, bool isAlive);
+        public delegate void PlayerPingedByAdminHandler(FrostbiteClient sender, string soldierName, int ping);
+
+        public delegate void SquadLeaderHandler(FrostbiteClient sender, int teamId, int squadId, string soldierName);
+        public delegate void SquadListActiveHandler(FrostbiteClient sender, int teamId, int squadCount, List<int> squadList);
+        public delegate void SquadListPlayersHandler(FrostbiteClient sender, int teamId, int squadId, int playerCount, List<string> playersInSquad);
+        public delegate void SquadIsPrivateHandler(FrostbiteClient sender, int teamId, int squadId, bool isPrivate);
+        
         public delegate void PacketDispatchHandler(FrostbiteClient sender, Packet packetBeforeDispatch, bool isCommandConnection);
         public delegate void PlayerTeamChangeHandler(FrostbiteClient sender, string strSoldierName, int iTeamID, int iSquadID);
         public delegate void PacketDispatchedHandler(FrostbiteClient sender, Packet packetBeforeDispatch, bool isCommandConnection, out bool isProcessed);
@@ -185,6 +200,7 @@ namespace PRoCon.Core.Remote {
         public delegate void EndRoundHandler(FrostbiteClient sender, int iWinningTeamID);
         public delegate void TextChatModerationModeHandler(FrostbiteClient sender, ServerModerationModeType mode);
         public delegate void UnlockModeHandler(FrostbiteClient sender, string mode);
+        public delegate void GunMasterWeaponsPresetHandler(FrostbiteClient sender, int preset);
 
         public delegate void TextChatModerationListAddPlayerHandler(FrostbiteClient sender, TextChatModerationEntry playerEntry);
         public delegate void TextChatModerationListRemovePlayerHandler(FrostbiteClient sender, TextChatModerationEntry playerEntry);
@@ -1374,6 +1390,22 @@ namespace PRoCon.Core.Remote {
             }
         }
 
+        public virtual void SendSetVarsGunMasterWeaponsPresetPacket(int preset)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.gunMasterWeaponsPreset", preset.ToString());
+            }
+        }
+
+        public virtual void SendGetVarsGunMasterWeaponsPresetPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.gunMasterWeaponsPreset");
+            }
+        }
+        
         public virtual void SendSetVarsSoldierHealthPacket(int limit) {
             if (this.IsLoggedIn == true) {
                 this.BuildSendPacket("vars.soldierHealth", limit.ToString());
@@ -1440,7 +1472,20 @@ namespace PRoCon.Core.Remote {
             }
         }
 
-        public virtual void SendSetReservedSlotsListAggressiveJoinPacket(bool enabled) {
+        public virtual void SendSetVarsCtfRoundTimeModifierPacket(int limit) {
+            if (this.IsLoggedIn == true) {
+                this.BuildSendPacket("vars.ctfRoundTimeModifier", limit.ToString());
+            }
+        }
+
+        public virtual void SendGetVarsCtfRoundTimeModifierPacket() {
+            if (this.IsLoggedIn == true) {
+                this.BuildSendPacket("vars.ctfRoundTimeModifier");
+            }
+        }
+
+        public virtual void SendSetReservedSlotsListAggressiveJoinPacket(bool enabled)
+        {
             if (this.IsLoggedIn == true) {
                 this.BuildSendPacket("reservedSlotsList.aggressiveJoin", Packet.bltos(enabled));
             }
@@ -1503,6 +1548,235 @@ namespace PRoCon.Core.Remote {
         
         #endregion
 
+        #region MoHW
+
+        // VarsAllUnlocksUnlocked
+        public virtual void SendSetVarsAllUnlocksUnlockedPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.allUnlocksUnlocked", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsAllUnlocksUnlockedPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.allUnlocksUnlocked");
+            }
+        }
+        // VarsHudBuddyOutline
+        public virtual void SendSetVarsBuddyOutlinePacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.buddyOutline", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsBuddyOutlinePacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.buddyOutline");
+            }
+        }
+        // VarsHudBuddyInfo
+        public virtual void SendSetVarsHudBuddyInfoPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudBuddyInfo", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudBuddyInfoPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudBuddyInfo");
+            }
+        }
+        // VarsHudClassAbility
+        public virtual void SendSetVarsHudClassAbilityPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudClassAbility", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudClassAbilityPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudClassAbility");
+            }
+        }
+        // VarsHudCrosshair
+        public virtual void SendSetVarsHudCrosshairPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudCrosshair", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudCrosshairPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudCrosshair");
+            }
+        }
+        // VarsHudEnemyTag
+        public virtual void SendSetVarsHudEnemyTagPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudEnemyTag", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudEnemyTagPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudEnemyTag");
+            }
+        }
+        // VarsHudExplosiveIcons
+        public virtual void SendSetVarsHudExplosiveIconsPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudExplosiveIcons", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudExplosiveIconsPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudExplosiveIcons");
+            }
+        }
+        // VarsHudGameMode
+        public virtual void SendSetVarsHudGameModePacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudGameMode", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudGameModePacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudGameMode");
+            }
+        }
+        // VarsHudHealthAmmo
+        public virtual void SendSetVarsHudHealthAmmoPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudHealthAmmo", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudHealthAmmoPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudHealthAmmo");
+            }
+        }
+        // VarsHudMinimapResponse
+        public virtual void SendSetVarsHudMinimapPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudMinimap", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudMinimapPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudMinimap");
+            }
+        }
+        // VarsHudObiturary
+        public virtual void SendSetVarsHudObituraryPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudObiturary", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudObituraryPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudObiturary");
+            }
+        }
+        // VarsHudPointsTracker
+        public virtual void SendSetVarsHudPointsTrackerPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudPointsTracker", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudPointsTrackerPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudPointsTracker");
+            }
+        }
+        // VarsHudUnlocks
+        public virtual void SendSetVarsHudUnlocksPacket(bool enabled)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudUnlocks", Packet.bltos(enabled));
+            }
+        }
+
+        public virtual void SendGetVarsHudUnlocksPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.hudUnlocks");
+            }
+        }
+        // VarsPlaylist
+        public virtual void SendSetVarsPlaylistPacket(string playlist)
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.playlist", playlist);
+            }
+        }
+
+        public virtual void SendGetVarsPlaylistPacket()
+        {
+            if (this.IsLoggedIn == true)
+            {
+                this.BuildSendPacket("vars.playlist");
+            }
+        }
+
+        #endregion
+        
         #endregion
 
         public virtual void SendSetVarsServerNamePacket(string serverName) {
@@ -1912,6 +2186,12 @@ namespace PRoCon.Core.Remote {
                     FrostbiteConnection.RaiseEvent(this.Yelling.GetInvocationList(), this, cpRequestPacket.Words[1], Convert.ToInt32(cpRequestPacket.Words[2]), cpRequestPacket.Words.GetRange(3, cpRequestPacket.Words.Count - 3));
                 }
             }
+            // MoHW
+            if (cpRequestPacket.Words.Count >= 3 && this.GameType == "MOHW") {
+                if (this.Yelling != null) {
+                    FrostbiteConnection.RaiseEvent(this.Yelling.GetInvocationList(), this, cpRequestPacket.Words[1], Convert.ToInt32("0"), cpRequestPacket.Words.GetRange(2, cpRequestPacket.Words.Count - 2));
+                }
+            }
         }
 
         #endregion
@@ -2189,6 +2469,7 @@ namespace PRoCon.Core.Remote {
             if (cpRequestPacket.Words.Count >= 1) {
                 if (this.MapListLoad != null) {
                     FrostbiteConnection.RaiseEvent(this.MapListLoad.GetInvocationList(), this);
+                    this.SendMapListListRoundsPacket();
                 }
             }
         }
@@ -3237,14 +3518,47 @@ namespace PRoCon.Core.Remote {
         public virtual event FrostbiteClient.LimitHandler RoundStartPlayerCount;
         public virtual event FrostbiteClient.LimitHandler PlayerRespawnTime;
         public virtual event FrostbiteClient.LimitHandler GameModeCounter;
+        public virtual event FrostbiteClient.LimitHandler CtfRoundTimeModifier;
         public virtual event FrostbiteClient.UnlockModeHandler UnlockMode;
+        public virtual event FrostbiteClient.GunMasterWeaponsPresetHandler GunMasterWeaponsPreset;
         public virtual event FrostbiteClient.IsEnabledHandler ReservedSlotsListAggressiveJoin;
         public virtual event FrostbiteClient.LimitHandler RoundLockdownCountdown;
         public virtual event FrostbiteClient.LimitHandler RoundWarmupTimeout;
         public virtual event FrostbiteClient.IsEnabledHandler PremiumStatus;
 
+        #region player/squad cmd_handler
+
+        public virtual event FrostbiteClient.PlayerIdleStateHandler PlayerIdleState;
+        public virtual event FrostbiteClient.PlayerIsAliveHandler PlayerIsAlive;
+        public virtual event FrostbiteClient.PlayerPingedByAdminHandler PlayerPingedByAdmin;
+
+        public virtual event FrostbiteClient.SquadLeaderHandler SquadLeader;
+        public virtual event FrostbiteClient.SquadListActiveHandler SquadListActive;
+        public virtual event FrostbiteClient.SquadListPlayersHandler SquadListPlayers;
+        public virtual event FrostbiteClient.SquadIsPrivateHandler SquadIsPrivate;
+        
         #endregion
 
+
+        #endregion
+        
+        #region vars MoHW
+        public virtual event FrostbiteClient.IsEnabledHandler AllUnlocksUnlocked;
+        public virtual event FrostbiteClient.IsEnabledHandler BuddyOutline;
+        public virtual event FrostbiteClient.IsEnabledHandler HudBuddyInfo;
+        public virtual event FrostbiteClient.IsEnabledHandler HudClassAbility;
+        public virtual event FrostbiteClient.IsEnabledHandler HudCrosshair;
+        public virtual event FrostbiteClient.IsEnabledHandler HudEnemyTag;
+        public virtual event FrostbiteClient.IsEnabledHandler HudExplosiveIcons;
+        public virtual event FrostbiteClient.IsEnabledHandler HudGameMode;
+        public virtual event FrostbiteClient.IsEnabledHandler HudHealthAmmo;
+        public virtual event FrostbiteClient.IsEnabledHandler HudMinimap;
+        public virtual event FrostbiteClient.IsEnabledHandler HudObiturary;
+        public virtual event FrostbiteClient.IsEnabledHandler HudPointsTracker;
+        public virtual event FrostbiteClient.IsEnabledHandler HudUnlocks;
+        public virtual event FrostbiteClient.PlaylistSetHandler Playlist;
+        #endregion
+        
         #endregion
 
         #region Text Chat Moderation

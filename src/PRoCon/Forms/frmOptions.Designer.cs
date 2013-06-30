@@ -52,6 +52,12 @@
             this.tabPlugins = new System.Windows.Forms.TabPage();
             this.lblPluginsChangesAfterRestart = new System.Windows.Forms.Label();
             this.pnlSandboxOptions = new System.Windows.Forms.Panel();
+            this.numPluginMaxRuntimeSec = new System.Windows.Forms.NumericUpDown();
+            this.numPluginMaxRuntimeMin = new System.Windows.Forms.NumericUpDown();
+            this.lblPluginMaxRuntimeSec = new System.Windows.Forms.Label();
+            this.lblPluginMaxRuntimeMin = new System.Windows.Forms.Label();
+            this.lblPluginMaxRuntime = new System.Windows.Forms.Label();
+            this.panel16 = new System.Windows.Forms.Panel();
             this.chkAllowSmtpConnections = new System.Windows.Forms.CheckBox();
             this.lblPluginsMail = new System.Windows.Forms.Label();
             this.panel13 = new System.Windows.Forms.Panel();
@@ -91,6 +97,10 @@
             this.lblHttpServerTitle = new System.Windows.Forms.Label();
             this.panel7 = new System.Windows.Forms.Panel();
             this.tabAdv = new System.Windows.Forms.TabPage();
+            this.lblAdvStartupChangeNotice = new System.Windows.Forms.Label();
+            this.chkAdvUsePluginOldStyleLoad = new System.Windows.Forms.CheckBox();
+            this.lblAdvStartup = new System.Windows.Forms.Label();
+            this.panel17 = new System.Windows.Forms.Panel();
             this.chkAdvShowCfmMsgRoundRestartNext = new System.Windows.Forms.CheckBox();
             this.lblAdvShowDICESpecialOptionsNotice = new System.Windows.Forms.Label();
             this.chkAdvShowDICESpecialOptions = new System.Windows.Forms.CheckBox();
@@ -110,6 +120,7 @@
             this.lblAdvPlayerTab = new System.Windows.Forms.Label();
             this.panel9 = new System.Windows.Forms.Panel();
             this.panel12 = new System.Windows.Forms.Panel();
+            this.tabAdv2 = new System.Windows.Forms.TabPage();
             this.tabPlayerLookup = new System.Windows.Forms.TabPage();
             this.lblStatsLinkHelpText = new System.Windows.Forms.Label();
             this.pnlStatsLinkManage = new System.Windows.Forms.Panel();
@@ -125,10 +136,15 @@
             this.lblStatsPlayerTab = new System.Windows.Forms.Label();
             this.panel15 = new System.Windows.Forms.Panel();
             this.btnClose = new System.Windows.Forms.Button();
+            this.chkAdv2EnableAdminReason = new System.Windows.Forms.CheckBox();
+            this.lblAdv2BanTab = new System.Windows.Forms.Label();
+            this.panel18 = new System.Windows.Forms.Panel();
             this.tbcOptions.SuspendLayout();
             this.tabBasics.SuspendLayout();
             this.tabPlugins.SuspendLayout();
             this.pnlSandboxOptions.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numPluginMaxRuntimeSec)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numPluginMaxRuntimeMin)).BeginInit();
             this.pnlPluginsAllowedDomains.SuspendLayout();
             this.tabHttpServer.SuspendLayout();
             this.pnlHttpServerSettings.SuspendLayout();
@@ -136,6 +152,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.picHttpServerForwardedTestStatus)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.picHttpServerServerStatus)).BeginInit();
             this.tabAdv.SuspendLayout();
+            this.tabAdv2.SuspendLayout();
             this.tabPlayerLookup.SuspendLayout();
             this.pnlStatsLinkManage.SuspendLayout();
             this.SuspendLayout();
@@ -149,6 +166,7 @@
             this.tbcOptions.Controls.Add(this.tabPlugins);
             this.tbcOptions.Controls.Add(this.tabHttpServer);
             this.tbcOptions.Controls.Add(this.tabAdv);
+            this.tbcOptions.Controls.Add(this.tabAdv2);
             this.tbcOptions.Controls.Add(this.tabPlayerLookup);
             this.tbcOptions.Location = new System.Drawing.Point(14, 14);
             this.tbcOptions.Name = "tbcOptions";
@@ -465,6 +483,12 @@
             // 
             // pnlSandboxOptions
             // 
+            this.pnlSandboxOptions.Controls.Add(this.numPluginMaxRuntimeSec);
+            this.pnlSandboxOptions.Controls.Add(this.numPluginMaxRuntimeMin);
+            this.pnlSandboxOptions.Controls.Add(this.lblPluginMaxRuntimeSec);
+            this.pnlSandboxOptions.Controls.Add(this.lblPluginMaxRuntimeMin);
+            this.pnlSandboxOptions.Controls.Add(this.lblPluginMaxRuntime);
+            this.pnlSandboxOptions.Controls.Add(this.panel16);
             this.pnlSandboxOptions.Controls.Add(this.chkAllowSmtpConnections);
             this.pnlSandboxOptions.Controls.Add(this.lblPluginsMail);
             this.pnlSandboxOptions.Controls.Add(this.panel13);
@@ -474,10 +498,83 @@
             this.pnlSandboxOptions.Controls.Add(this.pnlPluginsAllowedDomains);
             this.pnlSandboxOptions.Controls.Add(this.lblPluginsOutgoingConnections);
             this.pnlSandboxOptions.Controls.Add(this.panel5);
-            this.pnlSandboxOptions.Location = new System.Drawing.Point(3, 75);
+            this.pnlSandboxOptions.Location = new System.Drawing.Point(3, 60);
             this.pnlSandboxOptions.Name = "pnlSandboxOptions";
-            this.pnlSandboxOptions.Size = new System.Drawing.Size(381, 346);
+            this.pnlSandboxOptions.Size = new System.Drawing.Size(381, 361);
             this.pnlSandboxOptions.TabIndex = 24;
+            // 
+            // numPluginMaxRuntimeSec
+            // 
+            this.numPluginMaxRuntimeSec.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numPluginMaxRuntimeSec.Location = new System.Drawing.Point(183, 333);
+            this.numPluginMaxRuntimeSec.Maximum = new decimal(new int[] {
+            59,
+            0,
+            0,
+            0});
+            this.numPluginMaxRuntimeSec.Name = "numPluginMaxRuntimeSec";
+            this.numPluginMaxRuntimeSec.Size = new System.Drawing.Size(44, 23);
+            this.numPluginMaxRuntimeSec.TabIndex = 284;
+            this.numPluginMaxRuntimeSec.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.numPluginMaxRuntimeSec.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.numPluginMaxRuntimeSec.Validated += new System.EventHandler(this.numPluginMaxRuntimeSec_Validated);
+            // 
+            // numPluginMaxRuntimeMin
+            // 
+            this.numPluginMaxRuntimeMin.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numPluginMaxRuntimeMin.Location = new System.Drawing.Point(100, 333);
+            this.numPluginMaxRuntimeMin.Maximum = new decimal(new int[] {
+            59,
+            0,
+            0,
+            0});
+            this.numPluginMaxRuntimeMin.Name = "numPluginMaxRuntimeMin";
+            this.numPluginMaxRuntimeMin.Size = new System.Drawing.Size(44, 23);
+            this.numPluginMaxRuntimeMin.TabIndex = 283;
+            this.numPluginMaxRuntimeMin.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
+            this.numPluginMaxRuntimeMin.Validated += new System.EventHandler(this.numPluginMaxRuntimeMin_Validated);
+            // 
+            // lblPluginMaxRuntimeSec
+            // 
+            this.lblPluginMaxRuntimeSec.AutoSize = true;
+            this.lblPluginMaxRuntimeSec.Location = new System.Drawing.Point(233, 335);
+            this.lblPluginMaxRuntimeSec.Name = "lblPluginMaxRuntimeSec";
+            this.lblPluginMaxRuntimeSec.Size = new System.Drawing.Size(24, 15);
+            this.lblPluginMaxRuntimeSec.TabIndex = 33;
+            this.lblPluginMaxRuntimeSec.Text = "sec";
+            // 
+            // lblPluginMaxRuntimeMin
+            // 
+            this.lblPluginMaxRuntimeMin.AutoSize = true;
+            this.lblPluginMaxRuntimeMin.Location = new System.Drawing.Point(150, 335);
+            this.lblPluginMaxRuntimeMin.Name = "lblPluginMaxRuntimeMin";
+            this.lblPluginMaxRuntimeMin.Size = new System.Drawing.Size(28, 15);
+            this.lblPluginMaxRuntimeMin.TabIndex = 27;
+            this.lblPluginMaxRuntimeMin.Text = "min";
+            // 
+            // lblPluginMaxRuntime
+            // 
+            this.lblPluginMaxRuntime.AutoSize = true;
+            this.lblPluginMaxRuntime.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPluginMaxRuntime.Location = new System.Drawing.Point(14, 314);
+            this.lblPluginMaxRuntime.Name = "lblPluginMaxRuntime";
+            this.lblPluginMaxRuntime.Size = new System.Drawing.Size(184, 15);
+            this.lblPluginMaxRuntime.TabIndex = 30;
+            this.lblPluginMaxRuntime.Text = "Plugin runtime limit (per plugin)";
+            // 
+            // panel16
+            // 
+            this.panel16.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel16.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.panel16.Location = new System.Drawing.Point(17, 323);
+            this.panel16.Name = "panel16";
+            this.panel16.Size = new System.Drawing.Size(355, 1);
+            this.panel16.TabIndex = 31;
             // 
             // chkAllowSmtpConnections
             // 
@@ -666,7 +763,7 @@
             // 
             this.lblPluginsSecurity.AutoSize = true;
             this.lblPluginsSecurity.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPluginsSecurity.Location = new System.Drawing.Point(17, 24);
+            this.lblPluginsSecurity.Location = new System.Drawing.Point(17, 9);
             this.lblPluginsSecurity.Name = "lblPluginsSecurity";
             this.lblPluginsSecurity.Size = new System.Drawing.Size(90, 15);
             this.lblPluginsSecurity.TabIndex = 20;
@@ -677,7 +774,7 @@
             this.panel6.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel6.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.panel6.Location = new System.Drawing.Point(20, 33);
+            this.panel6.Location = new System.Drawing.Point(20, 18);
             this.panel6.Name = "panel6";
             this.panel6.Size = new System.Drawing.Size(355, 1);
             this.panel6.TabIndex = 21;
@@ -690,7 +787,7 @@
             this.cboPluginsSandboxOptions.Items.AddRange(new object[] {
             "Run plugins in a sandbox (recommended)",
             "Run plugins with no restrictions"});
-            this.cboPluginsSandboxOptions.Location = new System.Drawing.Point(31, 46);
+            this.cboPluginsSandboxOptions.Location = new System.Drawing.Point(31, 31);
             this.cboPluginsSandboxOptions.Name = "cboPluginsSandboxOptions";
             this.cboPluginsSandboxOptions.Size = new System.Drawing.Size(304, 24);
             this.cboPluginsSandboxOptions.TabIndex = 23;
@@ -897,6 +994,10 @@
             // 
             // tabAdv
             // 
+            this.tabAdv.Controls.Add(this.lblAdvStartupChangeNotice);
+            this.tabAdv.Controls.Add(this.chkAdvUsePluginOldStyleLoad);
+            this.tabAdv.Controls.Add(this.lblAdvStartup);
+            this.tabAdv.Controls.Add(this.panel17);
             this.tabAdv.Controls.Add(this.chkAdvShowCfmMsgRoundRestartNext);
             this.tabAdv.Controls.Add(this.lblAdvShowDICESpecialOptionsNotice);
             this.tabAdv.Controls.Add(this.chkAdvShowDICESpecialOptions);
@@ -924,10 +1025,51 @@
             this.tabAdv.Text = "Advanced";
             this.tabAdv.UseVisualStyleBackColor = true;
             // 
+            // lblAdvStartupChangeNotice
+            // 
+            this.lblAdvStartupChangeNotice.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblAdvStartupChangeNotice.Location = new System.Drawing.Point(47, 315);
+            this.lblAdvStartupChangeNotice.Name = "lblAdvStartupChangeNotice";
+            this.lblAdvStartupChangeNotice.Size = new System.Drawing.Size(305, 46);
+            this.lblAdvStartupChangeNotice.TabIndex = 37;
+            this.lblAdvStartupChangeNotice.Text = "Disabling may break older plugins variable load. Changing will require a restart " +
+    "to take effect.";
+            // 
+            // chkAdvUsePluginOldStyleLoad
+            // 
+            this.chkAdvUsePluginOldStyleLoad.AutoSize = true;
+            this.chkAdvUsePluginOldStyleLoad.Location = new System.Drawing.Point(30, 293);
+            this.chkAdvUsePluginOldStyleLoad.Name = "chkAdvUsePluginOldStyleLoad";
+            this.chkAdvUsePluginOldStyleLoad.Size = new System.Drawing.Size(227, 19);
+            this.chkAdvUsePluginOldStyleLoad.TabIndex = 36;
+            this.chkAdvUsePluginOldStyleLoad.Text = "Use old style to load plugins at startup";
+            this.chkAdvUsePluginOldStyleLoad.UseVisualStyleBackColor = true;
+            this.chkAdvUsePluginOldStyleLoad.CheckedChanged += new System.EventHandler(this.chkAdvUsePluginOldStyleLoad_CheckedChanged);
+            // 
+            // lblAdvStartup
+            // 
+            this.lblAdvStartup.AutoSize = true;
+            this.lblAdvStartup.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblAdvStartup.Location = new System.Drawing.Point(17, 275);
+            this.lblAdvStartup.Name = "lblAdvStartup";
+            this.lblAdvStartup.Size = new System.Drawing.Size(49, 15);
+            this.lblAdvStartup.TabIndex = 34;
+            this.lblAdvStartup.Text = "Startup";
+            // 
+            // panel17
+            // 
+            this.panel17.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel17.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.panel17.Location = new System.Drawing.Point(20, 284);
+            this.panel17.Name = "panel17";
+            this.panel17.Size = new System.Drawing.Size(355, 1);
+            this.panel17.TabIndex = 35;
+            // 
             // chkAdvShowCfmMsgRoundRestartNext
             // 
             this.chkAdvShowCfmMsgRoundRestartNext.AutoSize = true;
-            this.chkAdvShowCfmMsgRoundRestartNext.Location = new System.Drawing.Point(31, 319);
+            this.chkAdvShowCfmMsgRoundRestartNext.Location = new System.Drawing.Point(29, 253);
             this.chkAdvShowCfmMsgRoundRestartNext.Name = "chkAdvShowCfmMsgRoundRestartNext";
             this.chkAdvShowCfmMsgRoundRestartNext.Size = new System.Drawing.Size(238, 19);
             this.chkAdvShowCfmMsgRoundRestartNext.TabIndex = 33;
@@ -979,7 +1121,7 @@
             // chkAdvShowRoundTimerConstantly
             // 
             this.chkAdvShowRoundTimerConstantly.AutoSize = true;
-            this.chkAdvShowRoundTimerConstantly.Location = new System.Drawing.Point(31, 294);
+            this.chkAdvShowRoundTimerConstantly.Location = new System.Drawing.Point(29, 228);
             this.chkAdvShowRoundTimerConstantly.Name = "chkAdvShowRoundTimerConstantly";
             this.chkAdvShowRoundTimerConstantly.Size = new System.Drawing.Size(178, 19);
             this.chkAdvShowRoundTimerConstantly.TabIndex = 28;
@@ -991,7 +1133,7 @@
             // 
             this.lblAdvConVisuals.AutoSize = true;
             this.lblAdvConVisuals.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblAdvConVisuals.Location = new System.Drawing.Point(18, 265);
+            this.lblAdvConVisuals.Location = new System.Drawing.Point(17, 210);
             this.lblAdvConVisuals.Name = "lblAdvConVisuals";
             this.lblAdvConVisuals.Size = new System.Drawing.Size(110, 15);
             this.lblAdvConVisuals.TabIndex = 27;
@@ -1000,7 +1142,7 @@
             // lblAdvLayerTabsChangeNotice
             // 
             this.lblAdvLayerTabsChangeNotice.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblAdvLayerTabsChangeNotice.Location = new System.Drawing.Point(46, 226);
+            this.lblAdvLayerTabsChangeNotice.Location = new System.Drawing.Point(47, 172);
             this.lblAdvLayerTabsChangeNotice.Name = "lblAdvLayerTabsChangeNotice";
             this.lblAdvLayerTabsChangeNotice.Size = new System.Drawing.Size(305, 38);
             this.lblAdvLayerTabsChangeNotice.TabIndex = 26;
@@ -1011,7 +1153,7 @@
             this.chkAdvHideLocalAccountsTab.AutoSize = true;
             this.chkAdvHideLocalAccountsTab.Checked = true;
             this.chkAdvHideLocalAccountsTab.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkAdvHideLocalAccountsTab.Location = new System.Drawing.Point(31, 204);
+            this.chkAdvHideLocalAccountsTab.Location = new System.Drawing.Point(32, 150);
             this.chkAdvHideLocalAccountsTab.Name = "chkAdvHideLocalAccountsTab";
             this.chkAdvHideLocalAccountsTab.Size = new System.Drawing.Size(150, 19);
             this.chkAdvHideLocalAccountsTab.TabIndex = 22;
@@ -1024,7 +1166,7 @@
             this.chkAdvHideLocalPluginsTab.AutoSize = true;
             this.chkAdvHideLocalPluginsTab.Checked = true;
             this.chkAdvHideLocalPluginsTab.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkAdvHideLocalPluginsTab.Location = new System.Drawing.Point(31, 179);
+            this.chkAdvHideLocalPluginsTab.Location = new System.Drawing.Point(32, 125);
             this.chkAdvHideLocalPluginsTab.Name = "chkAdvHideLocalPluginsTab";
             this.chkAdvHideLocalPluginsTab.Size = new System.Drawing.Size(141, 19);
             this.chkAdvHideLocalPluginsTab.TabIndex = 21;
@@ -1036,7 +1178,7 @@
             // 
             this.lblAdvLayerTabs.AutoSize = true;
             this.lblAdvLayerTabs.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblAdvLayerTabs.Location = new System.Drawing.Point(17, 150);
+            this.lblAdvLayerTabs.Location = new System.Drawing.Point(17, 104);
             this.lblAdvLayerTabs.Name = "lblAdvLayerTabs";
             this.lblAdvLayerTabs.Size = new System.Drawing.Size(65, 15);
             this.lblAdvLayerTabs.TabIndex = 19;
@@ -1047,7 +1189,7 @@
             this.panel11.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel11.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.panel11.Location = new System.Drawing.Point(19, 159);
+            this.panel11.Location = new System.Drawing.Point(20, 116);
             this.panel11.Name = "panel11";
             this.panel11.Size = new System.Drawing.Size(355, 1);
             this.panel11.TabIndex = 20;
@@ -1057,7 +1199,7 @@
             this.chkAdvEnableChatAdminName.AutoSize = true;
             this.chkAdvEnableChatAdminName.Checked = true;
             this.chkAdvEnableChatAdminName.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.chkAdvEnableChatAdminName.Location = new System.Drawing.Point(32, 115);
+            this.chkAdvEnableChatAdminName.Location = new System.Drawing.Point(30, 82);
             this.chkAdvEnableChatAdminName.Name = "chkAdvEnableChatAdminName";
             this.chkAdvEnableChatAdminName.Size = new System.Drawing.Size(225, 19);
             this.chkAdvEnableChatAdminName.TabIndex = 18;
@@ -1069,7 +1211,7 @@
             // 
             this.lblAdvChatTab.AutoSize = true;
             this.lblAdvChatTab.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblAdvChatTab.Location = new System.Drawing.Point(18, 86);
+            this.lblAdvChatTab.Location = new System.Drawing.Point(17, 64);
             this.lblAdvChatTab.Name = "lblAdvChatTab";
             this.lblAdvChatTab.Size = new System.Drawing.Size(55, 15);
             this.lblAdvChatTab.TabIndex = 16;
@@ -1080,7 +1222,7 @@
             this.panel10.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel10.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.panel10.Location = new System.Drawing.Point(20, 95);
+            this.panel10.Location = new System.Drawing.Point(19, 73);
             this.panel10.Name = "panel10";
             this.panel10.Size = new System.Drawing.Size(355, 1);
             this.panel10.TabIndex = 17;
@@ -1088,7 +1230,7 @@
             // chkAdvEnableAdminMoveMsg
             // 
             this.chkAdvEnableAdminMoveMsg.AutoSize = true;
-            this.chkAdvEnableAdminMoveMsg.Location = new System.Drawing.Point(31, 52);
+            this.chkAdvEnableAdminMoveMsg.Location = new System.Drawing.Point(30, 42);
             this.chkAdvEnableAdminMoveMsg.Name = "chkAdvEnableAdminMoveMsg";
             this.chkAdvEnableAdminMoveMsg.Size = new System.Drawing.Size(182, 19);
             this.chkAdvEnableAdminMoveMsg.TabIndex = 15;
@@ -1121,10 +1263,23 @@
             this.panel12.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.panel12.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.panel12.Location = new System.Drawing.Point(19, 274);
+            this.panel12.Location = new System.Drawing.Point(18, 219);
             this.panel12.Name = "panel12";
             this.panel12.Size = new System.Drawing.Size(355, 1);
             this.panel12.TabIndex = 12;
+            // 
+            // tabAdv2
+            // 
+            this.tabAdv2.Controls.Add(this.chkAdv2EnableAdminReason);
+            this.tabAdv2.Controls.Add(this.lblAdv2BanTab);
+            this.tabAdv2.Controls.Add(this.panel18);
+            this.tabAdv2.Location = new System.Drawing.Point(4, 24);
+            this.tabAdv2.Name = "tabAdv2";
+            this.tabAdv2.Padding = new System.Windows.Forms.Padding(3);
+            this.tabAdv2.Size = new System.Drawing.Size(390, 475);
+            this.tabAdv2.TabIndex = 5;
+            this.tabAdv2.Text = "Advanced2";
+            this.tabAdv2.UseVisualStyleBackColor = true;
             // 
             // tabPlayerLookup
             // 
@@ -1199,11 +1354,13 @@
             this.lsvStatsLinksList.Location = new System.Drawing.Point(29, 70);
             this.lsvStatsLinksList.MultiSelect = false;
             this.lsvStatsLinksList.Name = "lsvStatsLinksList";
+            this.lsvStatsLinksList.ShowItemToolTips = true;
             this.lsvStatsLinksList.Size = new System.Drawing.Size(304, 136);
             this.lsvStatsLinksList.TabIndex = 27;
             this.lsvStatsLinksList.UseCompatibleStateImageBehavior = false;
             this.lsvStatsLinksList.View = System.Windows.Forms.View.Details;
             this.lsvStatsLinksList.SelectedIndexChanged += new System.EventHandler(this.lsvStatsLinksList_SelectedIndexChanged);
+            this.lsvStatsLinksList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.lsvStatsLinksList_MouseDoubleClick);
             // 
             // colStatsLinksName
             // 
@@ -1278,6 +1435,37 @@
             this.btnClose.TabIndex = 25;
             this.btnClose.Text = "Close";
             // 
+            // lblAdv2BanTab
+            // 
+            this.lblAdv2BanTab.AutoSize = true;
+            this.lblAdv2BanTab.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblAdv2BanTab.Location = new System.Drawing.Point(17, 24);
+            this.lblAdv2BanTab.Name = "lblAdv2BanTab";
+            this.lblAdv2BanTab.Size = new System.Drawing.Size(33, 15);
+            this.lblAdv2BanTab.TabIndex = 16;
+            this.lblAdv2BanTab.Text = "Bans";
+            // 
+            // chkAdv2EnableAdminReason
+            // 
+            this.chkAdv2EnableAdminReason.AutoSize = true;
+            this.chkAdv2EnableAdminReason.Location = new System.Drawing.Point(30, 42);
+            this.chkAdv2EnableAdminReason.Name = "chkAdv2EnableAdminReason";
+            this.chkAdv2EnableAdminReason.Size = new System.Drawing.Size(207, 19);
+            this.chkAdv2EnableAdminReason.TabIndex = 18;
+            this.chkAdv2EnableAdminReason.Text = "Enable Admin name in ban reason";
+            this.chkAdv2EnableAdminReason.UseVisualStyleBackColor = true;
+            this.chkAdv2EnableAdminReason.CheckedChanged += new System.EventHandler(this.chkAdv2EnableAdminReason_CheckedChanged);
+            // 
+            // panel18
+            // 
+            this.panel18.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.panel18.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.panel18.Location = new System.Drawing.Point(20, 33);
+            this.panel18.Name = "panel18";
+            this.panel18.Size = new System.Drawing.Size(355, 1);
+            this.panel18.TabIndex = 17;
+            // 
             // frmOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1303,6 +1491,8 @@
             this.tabPlugins.PerformLayout();
             this.pnlSandboxOptions.ResumeLayout(false);
             this.pnlSandboxOptions.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numPluginMaxRuntimeSec)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numPluginMaxRuntimeMin)).EndInit();
             this.pnlPluginsAllowedDomains.ResumeLayout(false);
             this.pnlPluginsAllowedDomains.PerformLayout();
             this.tabHttpServer.ResumeLayout(false);
@@ -1315,6 +1505,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.picHttpServerServerStatus)).EndInit();
             this.tabAdv.ResumeLayout(false);
             this.tabAdv.PerformLayout();
+            this.tabAdv2.ResumeLayout(false);
+            this.tabAdv2.PerformLayout();
             this.tabPlayerLookup.ResumeLayout(false);
             this.tabPlayerLookup.PerformLayout();
             this.pnlStatsLinkManage.ResumeLayout(false);
@@ -1426,5 +1618,19 @@
         private System.Windows.Forms.Label lblStatsLinkUrl;
         private System.Windows.Forms.Label lblStatsLinkName;
         private System.Windows.Forms.Label lblStatsLinkHelpText;
+        private System.Windows.Forms.Label lblPluginMaxRuntimeSec;
+        private System.Windows.Forms.Label lblPluginMaxRuntimeMin;
+        private System.Windows.Forms.Label lblPluginMaxRuntime;
+        private System.Windows.Forms.Panel panel16;
+        private System.Windows.Forms.NumericUpDown numPluginMaxRuntimeMin;
+        private System.Windows.Forms.NumericUpDown numPluginMaxRuntimeSec;
+        private System.Windows.Forms.CheckBox chkAdvUsePluginOldStyleLoad;
+        private System.Windows.Forms.Label lblAdvStartup;
+        private System.Windows.Forms.Panel panel17;
+        private System.Windows.Forms.Label lblAdvStartupChangeNotice;
+        private System.Windows.Forms.TabPage tabAdv2;
+        private System.Windows.Forms.CheckBox chkAdv2EnableAdminReason;
+        private System.Windows.Forms.Label lblAdv2BanTab;
+        private System.Windows.Forms.Panel panel18;
     }
 }

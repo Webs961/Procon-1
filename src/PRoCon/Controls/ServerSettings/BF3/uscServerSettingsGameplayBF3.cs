@@ -11,6 +11,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
     using Core;
     using Core.Remote;
     using Core.UnlockMode;
+    using Core.GunMasterWeaponsPreset;
     public partial class uscServerSettingsGameplayBF3 : uscServerSettingsGameplay {
 
         public uscServerSettingsGameplayBF3()
@@ -34,6 +35,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.AsyncSettingControls.Add("vars.onlysquadleaderspawn", new AsyncStyleSetting(this.picSettingsOnlySquadLeaderSpawn, this.chkSettingsOnlySquadLeaderSpawn, new Control[] { this.chkSettingsOnlySquadLeaderSpawn }, true));
             
             this.AsyncSettingControls.Add("vars.unlockmode", new AsyncStyleSetting(this.picSettingsUnlockMode, this.cboSettingsUnlockMode, new Control[] { this.cboSettingsUnlockMode }, true));
+            this.AsyncSettingControls.Add("vars.gunMasterWeaponsPreset", new AsyncStyleSetting(this.picSettingsGunMasterWeaponsPreset, this.cboSettingsGunMasterWeaponsPreset, new Control[] { this.cboSettingsGunMasterWeaponsPreset }, true));
 
             this.AsyncSettingControls.Add("vars.vehiclespawnallowed", new AsyncStyleSetting(this.picSettingsVehicleSpawnAllowed, this.chkSettingsVehicleSpawnAllowed, new Control[] { this.chkSettingsVehicleSpawnAllowed }, true));
             this.AsyncSettingControls.Add("vars.vehiclespawndelay", new AsyncStyleSetting(this.picSettingsVehicleSpawnDelay, this.numSettingsVehicleSpawnDelay, new Control[] { this.numSettingsVehicleSpawnDelay, this.lnkSettingsVehicleSpawnDelay }, true));
@@ -46,6 +48,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.AsyncSettingControls.Add("vars.playerrespawntime", new AsyncStyleSetting(this.picSettingsPlayerRespawnTime, this.numSettingsPlayerRespawnTime, new Control[] { this.numSettingsPlayerRespawnTime, this.lnkSettingsPlayerRespawnTime }, true));
             
             this.AsyncSettingControls.Add("vars.gameModeCounter", new AsyncStyleSetting(this.picSettingsGameModeCounter, this.numSettingsGameModeCounter, new Control[] { this.numSettingsGameModeCounter, this.lnkSettingsGameModeCounter }, true));
+            this.AsyncSettingControls.Add("vars.ctfRoundTimeModifier", new AsyncStyleSetting(this.picSettingsCtfRoundTimeModifier, this.numSettingsCtfRoundTimeModifier, new Control[] { this.numSettingsCtfRoundTimeModifier, this.lnkSettingsCtfRoundTimeModifier }, true));
             this.AsyncSettingControls.Add("vars.roundLockdownCountdown", new AsyncStyleSetting(this.picSettingsLockdownCountdown, this.numSettingsLockdownCountdown, new Control[] { this.numSettingsLockdownCountdown, this.lnkSettingsLockdownCountdown }, true));
             this.AsyncSettingControls.Add("vars.roundWarmupTimeout", new AsyncStyleSetting(this.picSettingsWarmupTimeout, this.numSettingsWarmupTimeout, new Control[] { this.numSettingsWarmupTimeout, this.lnkSettingsWarmupTimeout }, true));
         }
@@ -84,6 +87,8 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.lnkSettingsPlayerRespawnTime.Text = this.Language.GetLocalized("uscServerSettingsPanel.lnkSettingsPlayerRespawnTime");
             this.lblSettingsGameModeCounter.Text = this.Language.GetLocalized("uscServerSettingsPanel.lblSettingsGameModeCounter");
             this.lnkSettingsGameModeCounter.Text = this.Language.GetLocalized("uscServerSettingsPanel.lnkSettingsGameModeCounter");
+            this.lblSettingsCtfRoundTimeModifier.Text = this.Language.GetLocalized("uscServerSettingsPanel.lblSettingsCtfRoundTimeModifier");
+            this.lnkSettingsCtfRoundTimeModifier.Text = this.Language.GetLocalized("uscServerSettingsPanel.lnkSettingsCtfRoundTimeModifier");
             this.lblSettingsLockdownCountdown.Text = this.Language.GetLocalized("uscServerSettingsPanel.lblSettingsLockdownCountdown");
             this.lnkSettingsLockdownCountdown.Text = this.Language.GetLocalized("uscServerSettingsPanel.lnkSettingsLockdownCountdown");
             this.lblSettingsWarmupTimeout.Text = this.Language.GetLocalized("uscServerSettingsPanel.lblSettingsWarmupTimeout");
@@ -109,6 +114,25 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.cboSettingsUnlockMode.DisplayMember = "LongName";
             this.cboSettingsUnlockMode.ValueMember = "ShortName";
 
+            this.lblSettingsGunMasterWeaponsPreset.Text = this.Language.GetDefaultLocalized(this.lblSettingsGunMasterWeaponsPreset.Text, "uscServerSettingsPanel.lblSettingsGunMasterWeaponsPreset");
+            this.lnkSettingsGunMasterWeaponsPreset.Text = this.Language.GetDefaultLocalized(this.lnkSettingsGunMasterWeaponsPreset.Text, "uscServerSettingsPanel.lnkSettingsGunMasterWeaponsPreset");
+
+            ArrayList GunMasterWeaponsPresets = new ArrayList();
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("Standard", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.Standard"), ((int)GunMasterWeaponsPresetType.standard).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("Standard reversed", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.Reversed"), ((int)GunMasterWeaponsPresetType.reversed).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("Leight Weight", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.LightWeight"), ((int)GunMasterWeaponsPresetType.light_weigth).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("Heavy Gear", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.HeavyGear"), ((int)GunMasterWeaponsPresetType.heavy_gear).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("Pistol run", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.PistolRun"), ((int)GunMasterWeaponsPresetType.pistol_run).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("Snipers Heaven", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.SnipersHeaven"), ((int)GunMasterWeaponsPresetType.snipers_heaven).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("US arms race", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.UsArmsRace"), ((int)GunMasterWeaponsPresetType.us_arms_race).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("RU arms race", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.RuArmsRace"), ((int)GunMasterWeaponsPresetType.ru_arms_race).ToString()));
+            GunMasterWeaponsPresets.Add(new GunMasterWeaponsPreset(this.Language.GetDefaultLocalized("EU arms race", "uscServerSettingsPanel.cboSettingsGunMasterWeaponsPreset.EuArmsRace"), ((int)GunMasterWeaponsPresetType.eu_arms_race).ToString()));
+
+            this.cboSettingsGunMasterWeaponsPreset.DataSource = GunMasterWeaponsPresets;
+            this.cboSettingsGunMasterWeaponsPreset.DisplayMember = "LongName";
+            this.cboSettingsGunMasterWeaponsPreset.ValueMember = "ShortName";
+
+
         }
 
         public override void SetConnection(Core.Remote.PRoConClient prcClient) {
@@ -121,6 +145,11 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
                 else {
                     this.Client.GameTypeDiscovered += new PRoConClient.EmptyParamterHandler(m_prcClient_GameTypeDiscovered);
                 }
+            }
+
+            // override RoundStart minimum in case server is unranked
+            if (this.Client.CurrentServerInfo.Ranked == false) {
+                this.numSettingsRoundStartPlayerCount.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             }
         }
 
@@ -139,6 +168,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.Client.Game.Hud += new FrostbiteClient.IsEnabledHandler(Game_Hud);
             
             this.Client.Game.UnlockMode += new FrostbiteClient.UnlockModeHandler(Game_UnlockMode);
+            this.Client.Game.GunMasterWeaponsPreset += new FrostbiteClient.GunMasterWeaponsPresetHandler(Game_GunMasterWeaponsPreset);
 
             this.Client.Game.VehicleSpawnAllowed += new FrostbiteClient.IsEnabledHandler(Game_VehicleSpawnAllowed);
             this.Client.Game.VehicleSpawnDelay += new FrostbiteClient.LimitHandler(Game_VehicleSpawnDelay);
@@ -153,6 +183,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.Client.Game.PlayerRespawnTime += new FrostbiteClient.LimitHandler(Game_PlayerRespawnTime);
 
             this.Client.Game.GameModeCounter += new FrostbiteClient.LimitHandler(Game_GameModeCounter);
+            this.Client.Game.CtfRoundTimeModifier +=new FrostbiteClient.LimitHandler(Game_CtfRoundTimeModifier);
             this.Client.Game.RoundLockdownCountdown += new FrostbiteClient.LimitHandler(Game_RoundLockdownCountdown);
             this.Client.Game.RoundWarmupTimeout += new FrostbiteClient.LimitHandler(Game_RoundWarmupTimeout);
         }
@@ -386,7 +417,33 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
         }
 
         #endregion
-        
+
+        #region GunMasterWeaponsPreset
+
+        private int m_iPreviousSuccessGunMasterWeaponsPreset;
+
+        private void Game_GunMasterWeaponsPreset(FrostbiteClient sender, int preset)
+        {
+            this.m_iPreviousSuccessGunMasterWeaponsPreset = preset;
+            this.OnSettingResponse("vars.gunMasterWeaponsPreset", (decimal)preset, true);
+
+            this.cboSettingsGunMasterWeaponsPreset.SelectedValue = preset.ToString();
+        }
+
+        private void lnkSettingsGunMasterWeaponsPreset_LinkClicked(object sender, EventArgs e)
+        {
+            // see line 126 uscServerSettingsTextChatModeration.cs
+            if (this.Client != null && this.Client.Game != null) {
+                if (this.IgnoreEvents == false && this.AsyncSettingControls["vars.gunMasterWeaponsPreset"].IgnoreEvent == false) {
+                    this.WaitForSettingResponse("vars.gunMasterWeaponsPreset", (decimal)this.m_iPreviousSuccessGunMasterWeaponsPreset);
+
+                    this.Client.Game.SendSetVarsGunMasterWeaponsPresetPacket(Convert.ToInt32(this.cboSettingsGunMasterWeaponsPreset.SelectedValue));
+                }
+            }
+        }
+
+        #endregion
+
         #region Vehicle Spawning
 
         private void chkSettingsVehicleSpawnAllowed_CheckedChanged(object sender, EventArgs e) {
@@ -453,6 +510,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
         private int m_iPreviousSuccessRoundRestartPlayerCount;
 
         void Game_RoundRestartPlayerCount(FrostbiteClient sender, int limit) {
+            if (limit == -1) { limit = 2; }
             this.m_iPreviousSuccessRoundRestartPlayerCount = limit;
 
             this.OnSettingResponse("vars.roundrestartplayercount", (decimal)limit, true);
@@ -474,6 +532,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
         private int m_iPreviousSuccessRoundStartPlayerCount;
 
         void Game_RoundStartPlayerCount(FrostbiteClient sender, int limit) {
+            if (limit == -1) { limit = 4; }
             this.m_iPreviousSuccessRoundStartPlayerCount = limit;
 
             this.OnSettingResponse("vars.roundstartplayercount", (decimal)limit, true);
@@ -579,6 +638,30 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
 
         #endregion
 
+        #region CtfRoundTimeModifier
+
+        private int m_iPreviousSuccessCtfRoundTimeModifierPacket;
+
+        void Game_CtfRoundTimeModifier(FrostbiteClient sender, int limit)
+        {
+            this.m_iPreviousSuccessCtfRoundTimeModifierPacket = limit;
+
+            this.OnSettingResponse("vars.ctfRoundTimeModifier", (decimal)limit, true);
+        }
+
+        private void lnkSettingsCtfRoundTimeModifier_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (this.Client != null && this.Client.Game != null)
+            {
+                this.numSettingsCtfRoundTimeModifier.Focus();
+                this.WaitForSettingResponse("vars.ctfRoundTimeModifier", (decimal)this.m_iPreviousSuccessCtfRoundTimeModifierPacket);
+
+                this.Client.Game.SendSetVarsCtfRoundTimeModifierPacket((int)this.numSettingsCtfRoundTimeModifier.Value);
+            }
+        }
+
+        #endregion
+
         #region RoundLockdownCountdown & RoundWarmupTimeout
 
         private int m_iPreviousSuccessRoundLockdownCountdownPacket;
@@ -647,6 +730,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
                         this.Client.Game.SendSetVarsCrossHairPacket(true);
                         this.Client.Game.SendSetVarsVehicleSpawnDelayPacket(100);
                         this.Client.Game.SendSetVarsGameModeCounterPacket(100);
+                        this.Client.Game.SendSetVarsCtfRoundTimeModifierPacket(100);
                         break;
                     case 1: // Normal
 

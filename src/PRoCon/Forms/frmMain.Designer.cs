@@ -83,7 +83,7 @@
             this.toolStripDownloadProgress,
             this.toolStripDownloading,
             this.toolStripRssFeed});
-            this.stsMain.Location = new System.Drawing.Point(0, 740);
+            this.stsMain.Location = new System.Drawing.Point(0, 742);
             this.stsMain.Name = "stsMain";
             this.stsMain.Padding = new System.Windows.Forms.Padding(1, 0, 16, 0);
             this.stsMain.Size = new System.Drawing.Size(1008, 22);
@@ -455,6 +455,8 @@
             this.iglFlags.Images.SetKeyName(246, "zm.png");
             this.iglFlags.Images.SetKeyName(247, "zw.png");
             this.iglFlags.Images.SetKeyName(248, "flag_death.png");
+            this.iglFlags.Images.SetKeyName(249, "bq.png");
+            this.iglFlags.Images.SetKeyName(250, "ss.png");
             // 
             // ntfIcon
             // 
@@ -540,7 +542,7 @@
             this.pnlWindows.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlWindows.Location = new System.Drawing.Point(0, 30);
             this.pnlWindows.Name = "pnlWindows";
-            this.pnlWindows.Size = new System.Drawing.Size(1008, 710);
+            this.pnlWindows.Size = new System.Drawing.Size(1008, 712);
             this.pnlWindows.TabIndex = 8;
             // 
             // iglGameIcons
@@ -552,6 +554,7 @@
             this.iglGameIcons.Images.SetKeyName(2, "bfbc2.bc2.png");
             this.iglGameIcons.Images.SetKeyName(3, "bfbc2.vietnam.png");
             this.iglGameIcons.Images.SetKeyName(4, "bf3.png");
+            this.iglGameIcons.Images.SetKeyName(5, "mohw.png");
             // 
             // tlsConnections
             // 
@@ -710,7 +713,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1008, 762);
+            this.ClientSize = new System.Drawing.Size(1008, 764);
             this.Controls.Add(this.pnlWindows);
             this.Controls.Add(this.picLayerOffline);
             this.Controls.Add(this.tlsConnections);

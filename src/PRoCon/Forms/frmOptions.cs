@@ -54,6 +54,7 @@ namespace PRoCon.Forms {
         public static int INT_OPTIONS_PREFERENCES_SHOWWINDOW_TASKBARANDTRAY = 0;
         public static int INT_OPTIONS_PREFERENCES_SHOWWINDOW_TASKBARONLY = 1;
 
+        private string m_strAutoApplyUpdateInfo;
         private PRoConApplication m_praApplication;
 
         public frmOptions(PRoConApplication praApplication, frmMain frmParent) {
@@ -87,6 +88,7 @@ namespace PRoCon.Forms {
 
             this.m_praApplication.OptionsSettings.AdminMoveMessageChanged += new PRoCon.Core.Options.OptionsSettings.OptionsEnabledHandler(OptionsSettings_AdminMoveMessageChanged);
             this.m_praApplication.OptionsSettings.ChatDisplayAdminNameChanged += new PRoCon.Core.Options.OptionsSettings.OptionsEnabledHandler(OptionsSettings_ChatDisplayAdminNameChanged);
+            this.m_praApplication.OptionsSettings.EnableAdminReasonChanged += new PRoCon.Core.Options.OptionsSettings.OptionsEnabledHandler(OptionsSettings_EnableAdminReasonChanged);
 
             this.m_praApplication.OptionsSettings.LayerHideLocalAccountsChanged += new OptionsSettings.OptionsEnabledHandler(OptionsSettings_LayerHideLocalAccountsChanged);
             this.m_praApplication.OptionsSettings.LayerHideLocalPluginsChanged += new OptionsSettings.OptionsEnabledHandler(OptionsSettings_LayerHideLocalPluginsChanged);
@@ -99,6 +101,7 @@ namespace PRoCon.Forms {
             this.m_praApplication.OptionsSettings.StatsLinkNameUrl.ItemAdded += new NotificationList<PRoCon.Core.Options.StatsLinkNameUrl>.ItemModifiedHandler(StatsLinkNameUrl_ItemAdded);
             this.m_praApplication.OptionsSettings.StatsLinkNameUrl.ItemRemoved += new NotificationList<PRoCon.Core.Options.StatsLinkNameUrl>.ItemModifiedHandler(StatsLinkNameUrl_ItemRemoved);
 
+            this.m_praApplication.OptionsSettings.UsePluginOldStyleLoadChanged += new PRoCon.Core.Options.OptionsSettings.OptionsEnabledHandler(OptionsSettings_UsePluginOldStyleLoadChanged);
 
             //m_fntComboBoxFont = new Font("Calibri", 10);
             this.m_frmParent = frmParent;
@@ -159,6 +162,7 @@ namespace PRoCon.Forms {
 
                 this.m_praApplication.OptionsSettings.AdminMoveMessage = this.m_praApplication.OptionsSettings.AdminMoveMessage;
                 this.m_praApplication.OptionsSettings.ChatDisplayAdminName = this.m_praApplication.OptionsSettings.ChatDisplayAdminName;
+                this.m_praApplication.OptionsSettings.EnableAdminReason = this.m_praApplication.OptionsSettings.EnableAdminReason;
 
                 this.m_praApplication.OptionsSettings.LayerHideLocalAccounts = this.m_praApplication.OptionsSettings.LayerHideLocalAccounts;
                 this.m_praApplication.OptionsSettings.LayerHideLocalPlugins = this.m_praApplication.OptionsSettings.LayerHideLocalPlugins;
@@ -167,6 +171,15 @@ namespace PRoCon.Forms {
                 this.m_praApplication.OptionsSettings.ShowCfmMsgRoundRestartNext = this.m_praApplication.OptionsSettings.ShowCfmMsgRoundRestartNext;
 
                 this.m_praApplication.OptionsSettings.ShowDICESpecialOptions = this.m_praApplication.OptionsSettings.ShowDICESpecialOptions;
+
+                this.m_praApplication.OptionsSettings.UsePluginOldStyleLoad = this.m_praApplication.OptionsSettings.UsePluginOldStyleLoad;
+
+                this.m_praApplication.OptionsSettings.PluginMaxRuntime_m = this.m_praApplication.OptionsSettings.PluginMaxRuntime_m;
+                this.m_praApplication.OptionsSettings.PluginMaxRuntime_s = this.m_praApplication.OptionsSettings.PluginMaxRuntime_s;
+                if (this.m_praApplication.OptionsSettings.PluginMaxRuntimeLocked == true) {
+                    this.numPluginMaxRuntimeMin.Enabled = false;
+                    this.numPluginMaxRuntimeSec.Enabled = false;
+                }
 
                 this.lsvTrustedHostDomainPorts.Items.Clear();
                 foreach (TrustedHostWebsitePort trusted in this.m_praApplication.OptionsSettings.TrustedHostsWebsitesPorts) {
@@ -205,6 +218,9 @@ namespace PRoCon.Forms {
             this.chkBasicsAutoCheckDownloadForUpdates.Text = clocLanguage.GetLocalized("frmOptions.tabBasics.chkBasicsAutoCheckDownloadForUpdates");
             this.chkBasicsAutoApplyUpdates.Text = clocLanguage.GetLocalized("frmOptions.tabBasics.chkBasicsAutoApplyUpdates"); 
             this.chkBasicsAutoCheckGameConfigsForUpdates.Text = clocLanguage.GetLocalized("frmOptions.tabBasics.chkBasicsAutoCheckGameConfigsForUpdates");
+
+            this.m_strAutoApplyUpdateInfo = clocLanguage.GetDefaultLocalized("Already downloaded updates are installed in case of a restart!" + Environment.NewLine
+                + "In case you don't want this you should disable the automatic download of updates also.", "frmOptions.tabBasics.AutoApplyUpdateInfo").Replace("|*|", Environment.NewLine);
 
             this.lblBasicPreferences.Text = clocLanguage.GetLocalized("frmOptions.tabBasics.lblBasicPreferences");
             this.lblBasicsShowWindow.Text = clocLanguage.GetLocalized("frmOptions.tabBasics.lblBasicsShowWindow");
@@ -263,6 +279,11 @@ namespace PRoCon.Forms {
             this.chkAdvShowDICESpecialOptions.Text = clocLanguage.GetLocalized("frmOptions.tabAdvanced.lblAdvSpecialSwitches.chkAdvShowDICESpecialOptions");
             this.lblAdvShowDICESpecialOptionsNotice.Text = clocLanguage.GetLocalized("frmOptions.tabAdvanced.lblAdvSpecialSwitches.lblAdvShowDICESpecialOptionsNotice");
 
+            // Advanced2
+            this.tabAdv2.Text = clocLanguage.GetDefaultLocalized("Advanced2", "frmOptions.tabAdvanced2");
+            this.lblAdv2BanTab.Text = clocLanguage.GetDefaultLocalized("Bans", "frmOptions.lblAdv2BanTab");
+            this.chkAdv2EnableAdminReason.Text = clocLanguage.GetDefaultLocalized("Enable Admin name in ban reason", "frmOptions.tabBasics.chkAdv2EnableAdminReason");
+
             // StatsLinks
             this.tabPlayerLookup.Text = clocLanguage.GetLocalized("frmOptions.tabPlayerLookup");
             this.lblStatsPlayerTab.Text = clocLanguage.GetLocalized("frmOptions.tabAdvanced.lblAdvPlayerTab");
@@ -271,6 +292,18 @@ namespace PRoCon.Forms {
             this.lblStatsLinkName.Text = clocLanguage.GetLocalized("frmOptions.tabPlayerLookup.lblStatsLinkName");
             this.lblStatsLinkUrl.Text = clocLanguage.GetLocalized("frmOptions.tabPlayerLookup.lblStatsLinkUrl");
             this.lblStatsLinkHelpText.Text = clocLanguage.GetLocalized("frmOptions.tabPlayerLookup.lblStatsLinkHelpText", new String[] { this.m_praApplication.OptionsSettings.StatsLinksMaxNum.ToString() }).Replace("|*|", Environment.NewLine);
+
+            // PluginMaxRuntime
+            this.lblPluginMaxRuntime.Text = clocLanguage.GetDefaultLocalized("Plugin runtime limit (per plugin)", "frmOptions.tabPlugins.lblPluginMaxRuntime");
+            this.numPluginMaxRuntimeMin.Value = this.m_praApplication.OptionsSettings.PluginMaxRuntime_m;
+            this.lblPluginMaxRuntimeMin.Text = clocLanguage.GetDefaultLocalized("min", "frmOptions.tabPlugins.lblPluginMaxRuntimeMin");
+            this.numPluginMaxRuntimeSec.Value = this.m_praApplication.OptionsSettings.PluginMaxRuntime_s;
+            this.lblPluginMaxRuntimeSec.Text = clocLanguage.GetDefaultLocalized("sec", "frmOptions.tabPlugins.lblPluginMaxRuntimeSec");
+
+            // UsePluginOldStyleLoad
+            this.lblAdvStartup.Text = clocLanguage.GetDefaultLocalized(this.lblAdvStartup.Text, "frmOptions.tabAdvanced.lblAdvSpecialSwitches.chkAdvStartup");
+            this.chkAdvUsePluginOldStyleLoad.Text = clocLanguage.GetDefaultLocalized(this.chkAdvUsePluginOldStyleLoad.Text, "frmOptions.tabAdvanced.lblAdvSpecialSwitches.chkAdvUsePluginOldStyleLoad");
+            this.lblAdvStartupChangeNotice.Text = clocLanguage.GetDefaultLocalized(this.lblAdvStartupChangeNotice.Text, "frmOptions.tabAdvanced.lblAdvSpecialSwitches.lblAdvStartupChangeNotice");
 
             //this.m_strSetLanguageFileName = clocLanguage.FileName;
         }
@@ -443,6 +476,9 @@ namespace PRoCon.Forms {
         
         private void chkBasicsAutoApplyUpdates_CheckedChanged(object sender, EventArgs e) {
             this.m_praApplication.OptionsSettings.AutoApplyUpdates = this.chkBasicsAutoApplyUpdates.Checked;
+            if (this.chkBasicsAutoApplyUpdates.Checked == false) {
+                MessageBox.Show(this.m_strAutoApplyUpdateInfo, "Important Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
         }
 
         #endregion
@@ -774,6 +810,19 @@ namespace PRoCon.Forms {
 
         # endregion
 
+        #region Advanced2
+
+        void OptionsSettings_EnableAdminReasonChanged(bool blEnabled) {
+            this.chkAdv2EnableAdminReason.Checked = blEnabled;
+        }
+
+        private void chkAdv2EnableAdminReason_CheckedChanged(object sender, EventArgs e) {
+            this.m_praApplication.OptionsSettings.EnableAdminReason = this.chkAdv2EnableAdminReason.Checked;
+        }
+
+        
+        #endregion
+
         #region StatsLinks
 
         private void btnAddStatsLink_Click(object sender, EventArgs e)
@@ -794,6 +843,19 @@ namespace PRoCon.Forms {
                      this.m_praApplication.OptionsSettings.StatsLinkNameUrl.Remove((StatsLinkNameUrl)this.lsvStatsLinksList.SelectedItems[0].Tag);
                  }
              }
+        }
+
+        private void lsvStatsLinksList_MouseDoubleClick(object sender, EventArgs e)
+        {
+            if (this.lsvStatsLinksList.SelectedItems.Count == 0) {
+                return;
+            }
+            try {
+                Clipboard.SetDataObject(this.lsvStatsLinksList.SelectedItems[0].SubItems[1].Text, true, 5, 10);
+            }
+            catch (Exception) {
+                // Nope, another thread is accessing the clipboard..
+            }
         }
 
         private void txtStatsLinkName_TextChanged(object sender, EventArgs e)
@@ -840,11 +902,32 @@ namespace PRoCon.Forms {
         public static bool IsValidUrl(string strUrl)
         {
             //Regex rx = new Regex(@"^http(s?)\:\/\/[0-9a-zA-Z]([-.\w]*[0-9a-zA-Z])*(:(0-9)*)*(\/?)([a-zA-Z0-9\-\.\?\,\'\/\\\+&amp;%\$#_]*)?$");
-            Regex rx = new Regex(@"^http(s)?://([\w-%]+\.)+[\w-%]+(/[\w-./?%&=]*)?$");
+            Regex rx = new Regex(@"^http(s)?://([\w-%]+\.)+[\w-%]+(/[\w-+#.:/?%&=]*)?$");
             return rx.IsMatch(strUrl);
         }
 
         #endregion
 
+        #region PluginMaxRuntime
+        private void numPluginMaxRuntimeMin_Validated(object sender, EventArgs e) {
+            this.m_praApplication.OptionsSettings.PluginMaxRuntime_m = (int)this.numPluginMaxRuntimeMin.Value;
+        }
+
+        private void numPluginMaxRuntimeSec_Validated(object sender, EventArgs e) {
+            this.m_praApplication.OptionsSettings.PluginMaxRuntime_s = (int)this.numPluginMaxRuntimeSec.Value;
+        }
+        #endregion
+
+        #region UsePluginOldStyleLoad
+        void OptionsSettings_UsePluginOldStyleLoadChanged(bool blEnabled)
+        {
+            this.chkAdvUsePluginOldStyleLoad.Checked = blEnabled;
+        }
+
+        private void chkAdvUsePluginOldStyleLoad_CheckedChanged(object sender, EventArgs e)
+        {
+            this.m_praApplication.OptionsSettings.UsePluginOldStyleLoad = this.chkAdvUsePluginOldStyleLoad.Checked;
+        }
+        #endregion
     }
 }

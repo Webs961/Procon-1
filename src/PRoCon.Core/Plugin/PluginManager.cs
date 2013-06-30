@@ -27,6 +27,7 @@ using System.CodeDom.Compiler;
 using System.Reflection;
 using Microsoft.CSharp;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using System.Security;
@@ -61,14 +62,56 @@ namespace PRoCon.Core.Plugin {
 
         private PRoConClient m_client;
 
-        //private Dictionary<string, IPRoConPluginInterface> m_dicLoadedPlugins;
-        //private Dictionary<string, IPRoConPluginInterface> m_dicEnabledPlugins;
+        /// <summary>
+        /// Queue of plugin invocations.
+        /// 
+        /// I doubt this will ever actually have more than one invocation on it
+        /// unless we make plugin calls asynchronous in the future.
+        /// 
+        /// This however could break existing plugins that require all calls
+        /// to be synchronous.
+        /// </summary>
+        protected List<PluginInvocation> Invocations { get; set; }
 
-        //public Dictionary<string, Dictionary<string, string>> CacheFailCompiledPluginVariables { get; private set; }
+        /// <summary>
+        /// Thread to handle the looping of the timeout checker.
+        /// 
+        /// This thread will check if any invocations have taken longer than five seconds.
+        /// If they have it will destroy the AppDomain, rebuilding it but not loading
+        /// the faulty plugin.
+        /// </summary>
+        protected Thread InvocationTimeoutThread { get; set; }
+
+        /// <summary>
+        /// Checked inside of the invocation timeout loop. If false
+        /// the thread will gracefully exit.
+        /// </summary>
+        protected Boolean InvocationTimeoutThreadRunning { get; set; }
+
+        /// <summary>
+        /// A list of plugin class names that have previously been deemed as 
+        /// broken and should be ignored during compile/load time.
+        /// 
+        /// If a plugin is the cause of the manager going into a panic this
+        /// will serve for the manager to ignore the plugin when/if the manager
+        /// is reloaded because of the panic.
+        /// </summary>
+        public List<String> IgnoredPluginClassNames { get; protected set; }
 
         #endregion
 
         #region Events and Delegates
+
+        public delegate void PluginEventHandler();
+        /// <summary>
+        /// The plugin manager has gone into panic, the plugins should be
+        /// reloaded as the AppDomain has been compromised.
+        /// 
+        /// Panics can occur when a plugin invocation times out, possibly leaning
+        /// towards a runaway call within the AppDomain that would be chewing
+        /// a lot of resources.
+        /// </summary>
+        public event PluginEventHandler PluginPanic;
 
         public delegate void PluginOutputHandler(string strOutput);
         public event PluginOutputHandler PluginOutput;
@@ -116,13 +159,103 @@ namespace PRoCon.Core.Plugin {
 
             //this.CacheFailCompiledPluginVariables = new Dictionary<string, Dictionary<string, string>>();
 
-
             this.m_client = cpcClient;
             //this.LoadedClassNames = new List<string>();
             this.MatchedInGameCommands = new Dictionary<string, MatchCommand>();
             this.CommandsNeedingConfirmation = new ConfirmationDictionary();
 
+            // Handle plugin invocation timeouts.
+            this.Invocations = new List<PluginInvocation>();
+            this.IgnoredPluginClassNames = new List<String>();
+
+            this.InvocationTimeoutThreadRunning = true;
+            this.InvocationTimeoutThread = new Thread(new ThreadStart(this.InvocationTimeoutLoop));
+            this.InvocationTimeoutThread.Start();
+
             this.AssignEventHandler();
+        }
+
+        private void InvocationTimeoutLoop() {
+            // should be configurable via options
+            TimeSpan PluginMaxRuntime = PluginInvocation.MAXIMUM_RUNTIME;
+            //PluginMaxRuntime = new TimeSpan(0, 0, 59);
+            PluginMaxRuntime = this.m_client.m_tsPluginMaxRuntime;
+
+            if (PluginMaxRuntime.TotalMilliseconds < 10) { PluginMaxRuntime = PluginInvocation.MAXIMUM_RUNTIME; }
+
+            // Default maximum runtime = 5 seconds, divided by 20
+            // check every 250 milliseconds.
+            int sleepMilliseconds = (int)(PluginMaxRuntime.TotalMilliseconds / 20.0);
+
+            while (this.InvocationTimeoutThreadRunning) {
+                lock (this) {
+                    PluginInvocation invocation = this.Invocations.FirstOrDefault(); // .OrderBy(x => x.Runtime())
+
+                    if (invocation != null) {
+                        if (invocation.Runtime() >= PluginMaxRuntime) {
+
+                            this.WritePluginConsole("^1^bPlugin manager entering panic..");
+
+                            // Prevent the plugin from being loaded again during this instance
+                            // of the plugin manager.
+                            this.IgnoredPluginClassNames.Add(invocation.Plugin.ClassName);
+
+                            String faultText = invocation.FormatInvocationFault("Call exceeded maximum execution time of {0}", PluginMaxRuntime);
+
+                            // Log the error so we might alert a plugin developer that
+                            // a call to their plugin has caused the plugin manager to go
+                            // into a panic.
+                            File.AppendAllText("PLUGIN_DEBUG.txt", faultText);
+
+                            this.WritePluginConsole("^1^bPlugin invocation timeout: ");
+                            this.WritePluginConsole("^1" + faultText);
+
+                            if (this.PluginPanic != null) {
+                                this.PluginPanic();
+                            }
+                        }
+                    }
+                }
+
+                Thread.Sleep(sleepMilliseconds);
+            }
+        }
+
+        /// <summary>
+        /// Adds an invocation to our list.
+        /// 
+        /// It's titled Enqueue for this may change in the future if this class
+        /// is modified to handle asynchronous calls to plugins it will have to handle
+        /// in a sort-of queue like fashion.
+        /// </summary>
+        /// <param name="plugin">The plugin being invoked</param>
+        /// <param name="methodName">The method name within the plugin that is being invoked</param>
+        /// <param name="parameters">The parameters being passed to the method within the plugin being invoked.</param>
+        protected void EnqueueInvocation(Plugin plugin, String methodName, Object[] parameters) {
+
+            lock (this) {
+                this.Invocations.Add(new PluginInvocation() {
+                    Plugin = plugin,
+                    MethodName = methodName,
+                    Parameters = parameters
+                });
+            }
+        }
+
+        /// <summary>
+        /// Removes all occurences of the invocation
+        /// 
+        /// It's titled Dequeue for this may change in the future if this class
+        /// is modified to handle asynchronous calls to plugins it will have to handle
+        /// in a sort-of queue like fashion.
+        /// </summary>
+        /// <param name="plugin">The plugin that was invoked</param>
+        /// <param name="methodName">The method name within the plugin that was invoked</param>
+        /// <param name="parameters">The parameters being passed to the method within the plugin that was invoked.</param>
+        protected void DequeueInvocation(Plugin plugin, String methodName, Object[] parameters) {
+            lock (this) {
+                this.Invocations.RemoveAll((x) => x.Plugin == plugin && x.MethodName == methodName);
+            }
         }
 
         // TO DO: Move to seperate command control class with events captured by PluginManager.
@@ -186,32 +319,6 @@ namespace PRoCon.Core.Plugin {
                     this.WritePluginConsole("{0}.EnablePlugin(): {1}", className, e.Message);
                 }
             }
-
-            /*
-
-            // If it's loaded
-            if (this.m_dicLoadedPlugins.ContainsKey(strClassName) == true && this.m_dicEnabledPlugins.ContainsKey(strClassName) == false) {
-                // Move to enabled
-                this.m_dicEnabledPlugins.Add(strClassName, this.m_dicLoadedPlugins[strClassName]);
-
-                try {
-                    if (this.m_dicEnabledPlugins.ContainsKey(strClassName) == true) {
-                        this.m_dicEnabledPlugins[strClassName].Invoke("OnPluginEnable");
-
-                        if (this.PluginEnabled != null) {
-                            FrostbiteConnection.RaiseEvent(this.PluginEnabled.GetInvocationList(), strClassName);
-                        }
-                    }
-                }
-                catch (Exception e) {
-                    if (this.PluginOutput != null) {
-
-                    }
-
-                    this.WritePluginConsole("{0}.EnablePlugin(): {1}", strClassName, e.Message);
-                }
-            }
-             * */
         }
 
         public void DisablePlugin(string className) {
@@ -231,25 +338,6 @@ namespace PRoCon.Core.Plugin {
                     this.WritePluginConsole("{0}.DisablePlugin(): {1}", className, e.Message);
                 }
             }
-
-            /*
-            if (this.m_dicEnabledPlugins.ContainsKey(strClassName) == true) {
-
-                try {
-                    if (this.m_dicEnabledPlugins.ContainsKey(strClassName) == true) {
-                        this.m_dicEnabledPlugins[strClassName].Invoke("OnPluginDisable");
-                    }
-                }
-                catch (Exception e) {
-                    this.WritePluginConsole("{0}.DisablePlugin(): {1}", strClassName, e.Message);
-                }
-
-                this.m_dicEnabledPlugins.Remove(strClassName);
-                
-                if (this.PluginDisabled != null) {
-                    FrostbiteConnection.RaiseEvent(this.PluginDisabled.GetInvocationList(), strClassName);
-                }
-            } */
         }
 
         public PluginDetails GetPluginDetails(string strClassName) {
@@ -295,10 +383,47 @@ namespace PRoCon.Core.Plugin {
             }
         }
 
+        public PluginDetails GetPluginDetailsCon(string strClassName) {
+            PluginDetails spdReturnDetails = new PluginDetails();
+
+            spdReturnDetails.ClassName = strClassName;
+            spdReturnDetails.Name = this.InvokeOnLoaded_String(strClassName, "GetPluginName");
+            spdReturnDetails.Author = this.InvokeOnLoaded_String(strClassName, "GetPluginAuthor");
+            spdReturnDetails.Version = this.InvokeOnLoaded_String(strClassName, "GetPluginVersion");
+            spdReturnDetails.Website = this.InvokeOnLoaded_String(strClassName, "GetPluginWebsite");
+            spdReturnDetails.Description = this.InvokeOnLoaded_String(strClassName, "GetPluginDescription");
+
+            // a bit rough but for the moment...  
+            //spdReturnDetails.DisplayPluginVariables = this.InvokeOnLoaded_CPluginVariables(strClassName, "GetDisplayPluginVariables");
+            spdReturnDetails.PluginVariables = this.InvokeOnLoaded_CPluginVariables(strClassName, "GetPluginVariables");
+
+            return spdReturnDetails;
+        }
+
+        public void SetPluginVariableCon(string strClassName, string strVariable, string strValue) {
+
+            // FailCompiledPlugins
+
+            if (this.Plugins.Contains(strClassName) == true && this.Plugins[strClassName].IsLoaded == true) {
+
+                this.InvokeOnLoaded(strClassName, "SetPluginVariable", new object[] { strVariable, strValue });
+
+                if (this.PluginVariableAltered != null) {
+                    FrostbiteConnection.RaiseEvent(this.PluginVariableAltered.GetInvocationList(), this.GetPluginDetailsCon(strClassName));
+                }
+            } else if (this.Plugins.IsLoaded(strClassName) == false) {
+                this.Plugins.SetCachedPluginVariable(strClassName, strVariable, strValue);
+            }
+        }
+
         public void InvokeOnLoaded(string strClassName, string strMethod, params object[] a_objParameters) {
             try {
                 if (this.Plugins.Contains(strClassName) == true && this.Plugins[strClassName].IsLoaded == true) {
+                    this.EnqueueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
+
                     this.Plugins[strClassName].Type.Invoke(strMethod, a_objParameters);
+
+                    this.DequeueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
                 }
             }
             catch (Exception e) {
@@ -312,7 +437,11 @@ namespace PRoCon.Core.Plugin {
 
             try {
                 if (this.Plugins.Contains(strClassName) == true && this.Plugins[strClassName].IsLoaded == true) {
+                    this.EnqueueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
+
                     strReturn = (string)this.Plugins[strClassName].Type.Invoke(strMethod, a_objParameters);
+
+                    this.DequeueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
                 }
             }
             catch (Exception e) {
@@ -332,7 +461,11 @@ namespace PRoCon.Core.Plugin {
 
             try {
                 if (this.Plugins.Contains(strClassName) == true && this.Plugins[strClassName].IsLoaded == true) {
+                    this.EnqueueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
+
                     lstReturn = (List<CPluginVariable>)this.Plugins[strClassName].Type.Invoke(strMethod, a_objParameters);
+
+                    this.DequeueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
                 }
             }
             catch (Exception e) {
@@ -353,7 +486,11 @@ namespace PRoCon.Core.Plugin {
 
             try {
                 if (this.Plugins.Contains(strClassName) == true && this.Plugins[strClassName].IsEnabled == true) {
+                    this.EnqueueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
+
                     returnObject = this.Plugins[strClassName].Type.Invoke(strMethod, a_objParameters);
+
+                    this.DequeueInvocation(this.Plugins[strClassName], strMethod, a_objParameters);
                 }
             }
             catch (Exception e) {
@@ -368,7 +505,11 @@ namespace PRoCon.Core.Plugin {
             foreach (Plugin plugin in this.Plugins) {
                 if (plugin.IsLoaded == true) {
                     try {
+                        this.EnqueueInvocation(plugin, strMethod, a_objParameters);
+
                         plugin.ConditionalInvoke(strMethod, a_objParameters);
+
+                        this.DequeueInvocation(plugin, strMethod, a_objParameters);
                     }
                     catch (Exception e) {
                         this.WritePluginConsole("{0}.{1}(): {2}", plugin.ClassName, strMethod, e.Message);
@@ -382,7 +523,11 @@ namespace PRoCon.Core.Plugin {
             foreach (Plugin plugin in this.Plugins) {
                 if (plugin.IsEnabled == true) {
                     try {
+                        this.EnqueueInvocation(plugin, strMethod, a_objParameters);
+
                         plugin.ConditionalInvoke(strMethod, a_objParameters);
+
+                        this.DequeueInvocation(plugin, strMethod, a_objParameters);
                     }
                     catch (Exception e) {
                         this.WritePluginConsole("{0}.{1}(): {2}", plugin.ClassName, strMethod, e.Message);
@@ -399,6 +544,7 @@ namespace PRoCon.Core.Plugin {
                 }
                 
                 File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PRoCon.Core.dll"), Path.Combine(this.PluginBaseDirectory, "PRoCon.Core.dll"), true);
+                File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MySql.Data.dll"), Path.Combine(this.PluginBaseDirectory, "MySql.Data.dll"), true);
                 File.Copy(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "PRoCon.Core.pdb"), Path.Combine(this.PluginBaseDirectory, "PRoCon.Core.pdb"), true);
             }
             catch (Exception e) { }
@@ -434,9 +580,11 @@ namespace PRoCon.Core.Plugin {
             CompilerParameters parameters = new CompilerParameters();
 
             parameters.ReferencedAssemblies.Add("System.dll");
+            parameters.ReferencedAssemblies.Add("System.Core.dll");
             parameters.ReferencedAssemblies.Add("System.Data.dll");
             parameters.ReferencedAssemblies.Add("System.Windows.Forms.dll");
             parameters.ReferencedAssemblies.Add("System.Xml.dll");
+            parameters.ReferencedAssemblies.Add("MySql.Data.dll");
             parameters.ReferencedAssemblies.Add("PRoCon.Core.dll");
             parameters.GenerateInMemory = false;
             parameters.IncludeDebugInformation = false;
@@ -502,6 +650,9 @@ namespace PRoCon.Core.Plugin {
                     string fullPluginSource = File.ReadAllText(pluginFile.FullName);
 
                     parameters.OutputAssembly = outputAssembly;
+                    // uncomment the following two lines for debugin plugins included in your VS project (taken from PapaCharlie9)
+                    // parameters.IncludeDebugInformation = true;
+                    // parameters.TempFiles = new TempFileCollection(Path.Combine(this.PluginBaseDirectory, "Temp"), true);
 
                     fullPluginSource = this.PrecompileDirectives(fullPluginSource);
 
@@ -524,8 +675,9 @@ namespace PRoCon.Core.Plugin {
             catch (Exception) { }
         }
 
-        private void LoadPlugin(string pluginClassName, CPRoConPluginLoaderFactory pluginFactory) {
+        private void LoadPlugin(string pluginClassName, CPRoConPluginLoaderFactory pluginFactory, bool blSandboxDisabled) {
 
+            bool blSandboxEnabled = (blSandboxDisabled == true) ? false : true;
             string outputAssembly = Path.Combine(this.PluginBaseDirectory, pluginClassName + ".dll");
 
             if (File.Exists(outputAssembly) == true) {
@@ -564,7 +716,8 @@ namespace PRoCon.Core.Plugin {
                 List<string> lstPluginEnv = new List<string>( new string[] { Assembly.GetExecutingAssembly().GetName().Version.ToString(), 
                                                                              this.m_client.GameType, 
                                                                              this.m_client.CurrentServerInfo.GameMod.ToString(),
-                                                                             this.m_client.VersionNumber
+                                                                             this.m_client.VersionNumber,
+                                                                             blSandboxEnabled.ToString()
                                                                             });
                 this.InvokeOnLoaded(pluginClassName, "OnPluginLoadingEnv", lstPluginEnv);
 
@@ -588,9 +741,18 @@ namespace PRoCon.Core.Plugin {
             }
         }
 
-        public void CompilePlugins(PermissionSet pluginSandboxPermissions) {
+        public void CompilePlugins(PermissionSet pluginSandboxPermissions, List<String> ignoredPluginClassNames = null) {
 
             try {
+
+                // Make sure we ignore any plugins passed in. These won't even be loaded again.
+                if (ignoredPluginClassNames != null) {
+                    this.IgnoredPluginClassNames = ignoredPluginClassNames;
+                }
+
+                // Clear out all invocations if this is a reload.
+                this.Invocations.Clear();
+
                 this.WritePluginConsole("Preparing plugins directory..");
                 this.PreparePluginsDirectory();
                 this.CleanPlugins();
@@ -599,7 +761,10 @@ namespace PRoCon.Core.Plugin {
                 this.MoveLegacyPlugins();
 
                 this.WritePluginConsole("Creating compiler..");
-                CodeDomProvider pluginsCodeDomProvider = CodeDomProvider.CreateProvider("CSharp");
+                // CodeDomProvider pluginsCodeDomProvider = CodeDomProvider.CreateProvider("CSharp");
+                Dictionary<String, String> providerOptions = new Dictionary<String, String>();
+                providerOptions.Add("CompilerVersion", "v3.5");
+                CodeDomProvider pluginsCodeDomProvider = new CSharpCodeProvider(providerOptions);
 
                 this.WritePluginConsole("Configuring compiler..");
                 CompilerParameters parameters = GenerateCompilerParameters();
@@ -645,9 +810,14 @@ namespace PRoCon.Core.Plugin {
 
                     string className = Regex.Replace(pluginFile.Name, "\\.cs$", "");
 
-                    this.CompilePlugin(pluginFile, className, pluginsCodeDomProvider, parameters);
+                    if (this.IgnoredPluginClassNames.Contains(className) == false) {
+                        this.CompilePlugin(pluginFile, className, pluginsCodeDomProvider, parameters);
 
-                    this.LoadPlugin(className, pluginFactory);
+                        this.LoadPlugin(className, pluginFactory, pluginSandboxPermissions.IsUnrestricted());
+                    }
+                    else {
+                        this.WritePluginConsole("Compiling {0}... ^1^bIgnored", className);
+                    }
                 }
 
                 pluginsCodeDomProvider.Dispose();
@@ -663,6 +833,8 @@ namespace PRoCon.Core.Plugin {
             //this.m_dicLoadedPlugins = null;
             //this.LoadedClassNames = null;
             this.m_client = null;
+
+            this.InvocationTimeoutThreadRunning = false;
         }
 
         private void CleanPlugins() {
@@ -687,6 +859,8 @@ namespace PRoCon.Core.Plugin {
         public void Unload() {
 
             this.UnassignEventHandler();
+
+            this.InvocationTimeoutThreadRunning = false;
 
             try {
                 if (this.m_appDomainSandbox != null) {
@@ -810,6 +984,7 @@ namespace PRoCon.Core.Plugin {
             this.m_client.Game.RoundRestartPlayerCount -= new FrostbiteClient.LimitHandler(m_prcClient_RoundRestartPlayerCount);
             this.m_client.Game.RoundStartPlayerCount -= new FrostbiteClient.LimitHandler(m_prcClient_RoundStartPlayerCount);
             this.m_client.Game.GameModeCounter -= new FrostbiteClient.LimitHandler(m_prcClient_GameModeCounter);
+            this.m_client.Game.CtfRoundTimeModifier -= new FrostbiteClient.LimitHandler(m_prcClient_CtfRoundTimeModifier);
 
             this.m_client.Game.TextChatModerationMode -= new FrostbiteClient.TextChatModerationModeHandler(Game_TextChatModerationMode);
             this.m_client.Game.TextChatSpamCoolDownTime -= new FrostbiteClient.LimitHandler(Game_TextChatSpamCoolDownTime);
@@ -817,12 +992,49 @@ namespace PRoCon.Core.Plugin {
             this.m_client.Game.TextChatSpamTriggerCount -= new FrostbiteClient.LimitHandler(Game_TextChatSpamTriggerCount);
 
             this.m_client.Game.UnlockMode -= new FrostbiteClient.UnlockModeHandler(m_prcClient_UnlockMode);
+            this.m_client.Game.GunMasterWeaponsPreset -= new FrostbiteClient.GunMasterWeaponsPresetHandler(Game_GunMasterWeaponsPreset);
 
             this.m_client.Game.ReservedSlotsListAggressiveJoin -= new FrostbiteClient.IsEnabledHandler(Game_ReservedSlotsListAggressiveJoin);
             this.m_client.Game.RoundLockdownCountdown -= new FrostbiteClient.LimitHandler(Game_RoundLockdownCountdown);
             this.m_client.Game.RoundWarmupTimeout -= new FrostbiteClient.LimitHandler(Game_RoundWarmupTimeout);
 
             this.m_client.Game.PremiumStatus -= new FrostbiteClient.IsEnabledHandler(Game_PremiumStatus);
+
+            this.m_client.Game.VehicleSpawnAllowed -= new FrostbiteClient.IsEnabledHandler(Game_VehicleSpawnAllowed);
+            this.m_client.Game.VehicleSpawnDelay -= new FrostbiteClient.LimitHandler(Game_VehicleSpawnDelay);
+            this.m_client.Game.BulletDamage -= new FrostbiteClient.LimitHandler(Game_BulletDamage);
+            this.m_client.Game.OnlySquadLeaderSpawn -= new FrostbiteClient.IsEnabledHandler(Game_OnlySquadLeaderSpawn);
+            this.m_client.Game.SoldierHealth -= new FrostbiteClient.LimitHandler(Game_SoldierHealth);
+            this.m_client.Game.PlayerManDownTime -= new FrostbiteClient.LimitHandler(Game_PlayerManDownTime);
+            this.m_client.Game.PlayerRespawnTime -= new FrostbiteClient.LimitHandler(Game_PlayerRespawnTime);
+            this.m_client.Game.Hud -= new FrostbiteClient.IsEnabledHandler(Game_Hud);
+            this.m_client.Game.NameTag -= new FrostbiteClient.IsEnabledHandler(Game_NameTag);
+
+            this.m_client.Game.PlayerIdleState -= new FrostbiteClient.PlayerIdleStateHandler(Game_PlayerIdleState);
+            this.m_client.Game.PlayerIsAlive -= new FrostbiteClient.PlayerIsAliveHandler(Game_PlayerIsAlive);
+            this.m_client.Game.PlayerPingedByAdmin -= new FrostbiteClient.PlayerPingedByAdminHandler(Game_PlayerPingedByAdmin);
+
+            this.m_client.Game.SquadLeader -= new FrostbiteClient.SquadLeaderHandler(Game_SquadLeader);
+            this.m_client.Game.SquadListActive -= new FrostbiteClient.SquadListActiveHandler(Game_SquadListActive);
+            this.m_client.Game.SquadListPlayers -= new FrostbiteClient.SquadListPlayersHandler(Game_SquadListPlayers);
+            this.m_client.Game.SquadIsPrivate -= new FrostbiteClient.SquadIsPrivateHandler(Game_SquadIsPrivate);
+
+            #region MoHW
+            this.m_client.Game.AllUnlocksUnlocked -= new FrostbiteClient.IsEnabledHandler(Game_AllUnlocksUnlocked);
+            this.m_client.Game.BuddyOutline -= new FrostbiteClient.IsEnabledHandler(Game_BuddyOutline);
+            this.m_client.Game.HudBuddyInfo -= new FrostbiteClient.IsEnabledHandler(Game_HudBuddyInfo);
+            this.m_client.Game.HudClassAbility -= new FrostbiteClient.IsEnabledHandler(Game_HudClassAbility);
+            this.m_client.Game.HudCrosshair -= new FrostbiteClient.IsEnabledHandler(Game_HudCrosshair);
+            this.m_client.Game.HudEnemyTag -= new FrostbiteClient.IsEnabledHandler(Game_HudEnemyTag);
+            this.m_client.Game.HudExplosiveIcons -= new FrostbiteClient.IsEnabledHandler(Game_HudExplosiveIcons);
+            this.m_client.Game.HudGameMode -= new FrostbiteClient.IsEnabledHandler(Game_HudGameMode);
+            this.m_client.Game.HudHealthAmmo -= new FrostbiteClient.IsEnabledHandler(Game_HudHealthAmmo);
+            this.m_client.Game.HudMinimap -= new FrostbiteClient.IsEnabledHandler(Game_HudMinimap);
+            this.m_client.Game.HudObiturary -= new FrostbiteClient.IsEnabledHandler(Game_HudObiturary);
+            this.m_client.Game.HudPointsTracker -= new FrostbiteClient.IsEnabledHandler(Game_HudPointsTracker);
+            this.m_client.Game.HudUnlocks -= new FrostbiteClient.IsEnabledHandler(Game_HudUnlocks);
+            this.m_client.Game.Playlist -= new FrostbiteClient.PlaylistSetHandler(Game_Playlist);
+            #endregion
 
             // R13
             this.m_client.Game.ServerName -= new FrostbiteClient.ServerNameHandler(m_prcClient_ServerName);
@@ -982,6 +1194,7 @@ namespace PRoCon.Core.Plugin {
             this.m_client.Game.RoundRestartPlayerCount += new FrostbiteClient.LimitHandler(m_prcClient_RoundRestartPlayerCount);
             this.m_client.Game.RoundStartPlayerCount += new FrostbiteClient.LimitHandler(m_prcClient_RoundStartPlayerCount);
             this.m_client.Game.GameModeCounter += new FrostbiteClient.LimitHandler(m_prcClient_GameModeCounter);
+            this.m_client.Game.CtfRoundTimeModifier += new FrostbiteClient.LimitHandler(m_prcClient_CtfRoundTimeModifier);
 
             this.m_client.Game.TextChatModerationMode += new FrostbiteClient.TextChatModerationModeHandler(Game_TextChatModerationMode);
             this.m_client.Game.TextChatSpamCoolDownTime += new FrostbiteClient.LimitHandler(Game_TextChatSpamCoolDownTime);
@@ -989,12 +1202,49 @@ namespace PRoCon.Core.Plugin {
             this.m_client.Game.TextChatSpamTriggerCount += new FrostbiteClient.LimitHandler(Game_TextChatSpamTriggerCount);
 
             this.m_client.Game.UnlockMode += new FrostbiteClient.UnlockModeHandler(m_prcClient_UnlockMode);
+            this.m_client.Game.GunMasterWeaponsPreset += new FrostbiteClient.GunMasterWeaponsPresetHandler(Game_GunMasterWeaponsPreset);
 
             this.m_client.Game.ReservedSlotsListAggressiveJoin += new FrostbiteClient.IsEnabledHandler(Game_ReservedSlotsListAggressiveJoin);
             this.m_client.Game.RoundLockdownCountdown += new FrostbiteClient.LimitHandler(Game_RoundLockdownCountdown);
             this.m_client.Game.RoundWarmupTimeout += new FrostbiteClient.LimitHandler(Game_RoundWarmupTimeout);
 
             this.m_client.Game.PremiumStatus += new FrostbiteClient.IsEnabledHandler(Game_PremiumStatus);
+
+            this.m_client.Game.VehicleSpawnAllowed += new FrostbiteClient.IsEnabledHandler(Game_VehicleSpawnAllowed);
+            this.m_client.Game.VehicleSpawnDelay += new FrostbiteClient.LimitHandler(Game_VehicleSpawnDelay);
+            this.m_client.Game.BulletDamage += new FrostbiteClient.LimitHandler(Game_BulletDamage);
+            this.m_client.Game.OnlySquadLeaderSpawn += new FrostbiteClient.IsEnabledHandler(Game_OnlySquadLeaderSpawn);
+            this.m_client.Game.SoldierHealth += new FrostbiteClient.LimitHandler(Game_SoldierHealth);
+            this.m_client.Game.PlayerManDownTime += new FrostbiteClient.LimitHandler(Game_PlayerManDownTime);
+            this.m_client.Game.PlayerRespawnTime += new FrostbiteClient.LimitHandler(Game_PlayerRespawnTime);
+            this.m_client.Game.Hud += new FrostbiteClient.IsEnabledHandler(Game_Hud);
+            this.m_client.Game.NameTag += new FrostbiteClient.IsEnabledHandler(Game_NameTag);
+
+            this.m_client.Game.PlayerIdleState += new FrostbiteClient.PlayerIdleStateHandler(Game_PlayerIdleState);
+            this.m_client.Game.PlayerIsAlive += new FrostbiteClient.PlayerIsAliveHandler(Game_PlayerIsAlive);
+            this.m_client.Game.PlayerPingedByAdmin += new FrostbiteClient.PlayerPingedByAdminHandler(Game_PlayerPingedByAdmin);
+
+            this.m_client.Game.SquadLeader += new FrostbiteClient.SquadLeaderHandler(Game_SquadLeader);
+            this.m_client.Game.SquadListActive += new FrostbiteClient.SquadListActiveHandler(Game_SquadListActive);
+            this.m_client.Game.SquadListPlayers += new FrostbiteClient.SquadListPlayersHandler(Game_SquadListPlayers);
+            this.m_client.Game.SquadIsPrivate += new FrostbiteClient.SquadIsPrivateHandler(Game_SquadIsPrivate);
+
+            #region MoHW
+            this.m_client.Game.AllUnlocksUnlocked += new FrostbiteClient.IsEnabledHandler(Game_AllUnlocksUnlocked);
+            this.m_client.Game.BuddyOutline += new FrostbiteClient.IsEnabledHandler(Game_BuddyOutline);
+            this.m_client.Game.HudBuddyInfo += new FrostbiteClient.IsEnabledHandler(Game_HudBuddyInfo);
+            this.m_client.Game.HudClassAbility += new FrostbiteClient.IsEnabledHandler(Game_HudClassAbility);
+            this.m_client.Game.HudCrosshair += new FrostbiteClient.IsEnabledHandler(Game_HudCrosshair);
+            this.m_client.Game.HudEnemyTag += new FrostbiteClient.IsEnabledHandler(Game_HudEnemyTag);
+            this.m_client.Game.HudExplosiveIcons += new FrostbiteClient.IsEnabledHandler(Game_HudExplosiveIcons);
+            this.m_client.Game.HudGameMode += new FrostbiteClient.IsEnabledHandler(Game_HudGameMode);
+            this.m_client.Game.HudHealthAmmo += new FrostbiteClient.IsEnabledHandler(Game_HudHealthAmmo);
+            this.m_client.Game.HudMinimap += new FrostbiteClient.IsEnabledHandler(Game_HudMinimap);
+            this.m_client.Game.HudObiturary += new FrostbiteClient.IsEnabledHandler(Game_HudObiturary);
+            this.m_client.Game.HudPointsTracker += new FrostbiteClient.IsEnabledHandler(Game_HudPointsTracker);
+            this.m_client.Game.HudUnlocks += new FrostbiteClient.IsEnabledHandler(Game_HudUnlocks);
+            this.m_client.Game.Playlist += new FrostbiteClient.PlaylistSetHandler(Game_Playlist);
+            #endregion
 
             // R13
             this.m_client.Game.ServerName += new FrostbiteClient.ServerNameHandler(m_prcClient_ServerName);
@@ -1651,6 +1901,11 @@ namespace PRoCon.Core.Plugin {
             this.InvokeOnAllEnabled("OnGameModeCounter", new object[] { limit });
         }
 
+        private void m_prcClient_CtfRoundTimeModifier(FrostbiteClient sender, int limit)
+        {
+            this.InvokeOnAllEnabled("OnCtfRoundTimeModifier", new object[] { limit });
+        }
+
         private void m_prcClient_RoundRestartPlayerCount(FrostbiteClient sender, int limit)
         {
             this.InvokeOnAllEnabled("OnRoundRestartPlayerCount", new object[] { limit });
@@ -1664,6 +1919,11 @@ namespace PRoCon.Core.Plugin {
         private void m_prcClient_UnlockMode(FrostbiteClient sender, string mode)
         {
             this.InvokeOnAllEnabled("OnUnlockMode", new object[] { mode });
+        }
+
+        private void Game_GunMasterWeaponsPreset(FrostbiteClient sender, int preset)
+        {
+            this.InvokeOnAllEnabled("OnGunMasterWeaponsPreset", new object[] { preset });
         }
 
         private void Game_ReservedSlotsListAggressiveJoin(FrostbiteClient sender, bool isEnabled)
@@ -1685,6 +1945,122 @@ namespace PRoCon.Core.Plugin {
         {
             this.InvokeOnAllEnabled("OnPremiumStatus", isEnabled);
         }
+
+        private void Game_VehicleSpawnAllowed(FrostbiteClient sender, bool isEnabled) {
+            this.InvokeOnAllEnabled("OnVehicleSpawnAllowed", isEnabled);
+        }
+
+        private void Game_VehicleSpawnDelay(FrostbiteClient sender, int limit) {
+            this.InvokeOnAllEnabled("OnVehicleSpawnDelay", new object[] { limit });
+        }
+
+        private void Game_BulletDamage(FrostbiteClient sender, int limit) {
+            this.InvokeOnAllEnabled("OnBulletDamage", new object[] { limit });
+        }
+
+        private void Game_OnlySquadLeaderSpawn(FrostbiteClient sender, bool isEnabled) {
+            this.InvokeOnAllEnabled("OnOnlySquadLeaderSpawn", isEnabled);
+        }
+
+        private void Game_SoldierHealth(FrostbiteClient sender, int limit) {
+            this.InvokeOnAllEnabled("OnSoldierHealth", new object[] { limit });
+        }
+
+        private void Game_PlayerManDownTime(FrostbiteClient sender, int limit) {
+            this.InvokeOnAllEnabled("OnPlayerManDownTime", new object[] { limit });
+        }
+
+        private void Game_PlayerRespawnTime(FrostbiteClient sender, int limit) {
+            this.InvokeOnAllEnabled("OnPlayerRespawnTime", new object[] { limit });
+        }
+
+        private void Game_Hud(FrostbiteClient sender, bool isEnabled) {
+            this.InvokeOnAllEnabled("OnHud", isEnabled);
+        }
+
+        private void Game_NameTag(FrostbiteClient sender, bool isEnabled) {
+            this.InvokeOnAllEnabled("OnNameTag", isEnabled);
+        }
+
+        
+        #region MoHW vars setting events
+        private void Game_(FrostbiteClient sender, bool isEnabled) {
+            this.InvokeOnAllEnabled("On", isEnabled);
+        }
+
+        private void Game_AllUnlocksUnlocked(FrostbiteClient sender, bool isEnabled) {
+            this.InvokeOnAllEnabled("OnAllUnlocksUnlocked", isEnabled);
+        }
+
+        private void Game_BuddyOutline(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnBuddyOutline", isEnabled);
+        }
+
+        private void Game_HudBuddyInfo(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudBuddyInfo", isEnabled);
+        }
+
+        private void Game_HudClassAbility(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudClassAbility", isEnabled);
+        }
+
+        private void Game_HudCrosshair(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnCrosshair", isEnabled);
+            this.InvokeOnAllEnabled("OnHudCrosshair", isEnabled);
+        }
+
+        private void Game_HudEnemyTag(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudEnemyTag", isEnabled);
+        }
+
+        private void Game_HudExplosiveIcons(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudExplosiveIcons", isEnabled);
+        }
+
+        private void Game_HudGameMode(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudGameMode", isEnabled);
+        }
+
+        private void Game_HudHealthAmmo(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudHealthAmmo", isEnabled);
+        }
+
+        private void Game_HudMinimap(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudMinimap", isEnabled);
+        }
+
+        private void Game_HudObiturary(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudObiturary", isEnabled);
+        }
+
+        private void Game_HudPointsTracker(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudPointsTracker", isEnabled);
+        }
+
+        private void Game_HudUnlocks(FrostbiteClient sender, bool isEnabled)
+        {
+            this.InvokeOnAllEnabled("OnHudUnlocks", isEnabled);
+        }
+
+        private void Game_Playlist(FrostbiteClient sender, string playlist)
+        {
+            this.InvokeOnAllEnabled("OnPlaylistSet", playlist);
+            this.InvokeOnAllEnabled("OnPlaylist", playlist);
+        }
+        
+        #endregion
+
 
         #region Text Chat Moderation Settings
 
@@ -1768,6 +2144,37 @@ namespace PRoCon.Core.Plugin {
             this.InvokeOnAllEnabled("OnPlayerMovedByAdmin", soldierName, destinationTeamId, destinationSquadId, forceKilled);
         }
 
+        #endregion
+
+        #region player/squad cmds
+
+        private void Game_PlayerIdleState(FrostbiteClient sender, string soldierName, int idleTime) {
+            this.InvokeOnAllEnabled("OnPlayerIdleDuration", soldierName, idleTime);
+        }
+
+        private void Game_PlayerIsAlive(FrostbiteClient sender, string soldierName, bool isAlive) {
+            this.InvokeOnAllEnabled("OnPlayerIsAlive", soldierName, isAlive);
+        }
+
+        private void Game_PlayerPingedByAdmin(FrostbiteClient sender, string soldierName, int ping) {
+            this.InvokeOnAllEnabled("OnPlayerPingedByAdmin", soldierName, ping);
+        }
+
+        private void Game_SquadLeader(FrostbiteClient sender, int teamId, int squadId, string soldierName) {
+            this.InvokeOnAllEnabled("OnSquadLeader", teamId, squadId, soldierName);
+        }
+
+        private void Game_SquadListActive(FrostbiteClient sender, int teamId, int squadCount, List<int> squadList) {
+            this.InvokeOnAllEnabled("OnSquadListActive", teamId, squadCount, squadList);
+        }
+
+        private void Game_SquadListPlayers(FrostbiteClient sender, int teamId, int squadId, int playerCount, List<string> playersInSquad) {
+            this.InvokeOnAllEnabled("OnSquadListPlayers", teamId, squadId, playerCount, playersInSquad);
+        }
+
+        private void Game_SquadIsPrivate(FrostbiteClient sender, int teamId, int squadId, bool isPrivate) {
+            this.InvokeOnAllEnabled("OnSquadIsPrivate", teamId, squadId, isPrivate);
+        }
         #endregion
 
         #endregion

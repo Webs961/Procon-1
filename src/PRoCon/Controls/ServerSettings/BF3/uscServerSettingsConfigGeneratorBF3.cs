@@ -64,6 +64,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.Client.Game.RegenerateHealth += new FrostbiteClient.IsEnabledHandler(Game_RegenerateHealth);
             this.Client.Game.OnlySquadLeaderSpawn += new FrostbiteClient.IsEnabledHandler(Game_OnlySquadLeaderSpawn);
             this.Client.Game.UnlockMode += new FrostbiteClient.UnlockModeHandler(Game_UnlockMode);
+            this.Client.Game.GunMasterWeaponsPreset += new FrostbiteClient.GunMasterWeaponsPresetHandler(Game_GunMasterWeaponsPreset);
             this.Client.Game.SoldierHealth += new FrostbiteClient.LimitHandler(Game_SoldierHealth);
             this.Client.Game.Hud += new FrostbiteClient.IsEnabledHandler(Game_Hud);
             this.Client.Game.PlayerManDownTime += new FrostbiteClient.LimitHandler(Game_PlayerManDownTime);
@@ -71,6 +72,7 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.Client.Game.RoundStartPlayerCount += new FrostbiteClient.LimitHandler(Game_RoundStartPlayerCount);
             this.Client.Game.PlayerRespawnTime += new FrostbiteClient.LimitHandler(Game_PlayerRespawnTime);
             this.Client.Game.GameModeCounter += new FrostbiteClient.LimitHandler(Game_GameModeCounter);
+            this.Client.Game.CtfRoundTimeModifier +=new FrostbiteClient.LimitHandler(Game_CtfRoundTimeModifier);
             this.Client.Game.IdleTimeout += new FrostbiteClient.LimitHandler(Client_IdleTimeout);
             this.Client.Game.IdleBanRounds += new FrostbiteClient.LimitHandler(Game_IdleBanRounds);
             this.Client.Game.ServerMessage += new FrostbiteClient.ServerMessageHandler(Game_ServerMessage);
@@ -120,7 +122,12 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
             this.AppendSetting("vars.unlockMode", mode.ToLower());
         }
 
-        void Game_OnlySquadLeaderSpawn(FrostbiteClient sender, bool isEnabled) {
+        void Game_GunMasterWeaponsPreset(FrostbiteClient sender, int preset) {
+            this.AppendSetting("vars.gunMasterWeaponsPreset", preset.ToString());
+        }
+
+        void Game_OnlySquadLeaderSpawn(FrostbiteClient sender, bool isEnabled)
+        {
             this.AppendSetting("vars.onlySquadLeaderSpawn", isEnabled.ToString());
         }
 
@@ -180,7 +187,12 @@ namespace PRoCon.Controls.ServerSettings.BF3 {
         {
             this.AppendSetting("vars.gameModeCounter", limit.ToString());
         }
-        
+
+        void Game_CtfRoundTimeModifier(FrostbiteClient sender, int limit)
+        {
+            this.AppendSetting("vars.ctfRoundTimeModifier", limit.ToString());
+        }
+
         protected override void Client_PlayerLimit(FrostbiteClient sender, int limit) {
             this.AppendSetting("vars.maxPlayers", limit.ToString());
         }

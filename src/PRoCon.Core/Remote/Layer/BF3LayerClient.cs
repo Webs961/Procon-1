@@ -22,12 +22,14 @@ namespace PRoCon.Core.Remote.Layer {
             this.m_requestDelegates.Add("vars.roundRestartPlayerCount", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.onlySquadLeaderSpawn", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.unlockMode", this.DispatchVarsRequest);
+            this.m_requestDelegates.Add("vars.gunMasterWeaponsPreset", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.soldierHealth", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.hud", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.playerManDownTime", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.roundStartPlayerCount", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.playerRespawnTime", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.gameModeCounter", this.DispatchVarsRequest);
+            this.m_requestDelegates.Add("vars.ctfRoundTimeModifier", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.roundLockdownCountdown", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.roundWarmupTimeout", this.DispatchVarsRequest);
 
@@ -61,6 +63,15 @@ namespace PRoCon.Core.Remote.Layer {
 
             this.m_requestDelegates.Add("vars.serverMessage", this.DispatchVarsRequest);
             this.m_requestDelegates.Add("vars.premiumStatus", this.DispatchVarsRequest);
+
+            this.m_requestDelegates.Add("player.idleDuration", this.DispatchSecureSafeListedRequest);
+            this.m_requestDelegates.Add("player.isAlive", this.DispatchSecureSafeListedRequest);
+            this.m_requestDelegates.Add("player.ping", this.DispatchSecureSafeListedRequest);
+            this.m_requestDelegates.Add("squad.leader", this.DispatchSquadLeaderRequest);
+            this.m_requestDelegates.Add("squad.listActive", this.DispatchSecureSafeListedRequest);
+            this.m_requestDelegates.Add("squad.listPlayers", this.DispatchSecureSafeListedRequest);
+            this.m_requestDelegates.Add("squad.private", this.DispatchSquadIsPrivateRequest);
         }
+
     }
 }
